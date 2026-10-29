@@ -1,4 +1,5 @@
-"""`mdify <path-or-url>… [--out DIR]` writes a bundle per source; `mdify check <bundle>…` re-derives its invariants.
+"""`mdify <path-or-url>… [--out DIR]` writes a bundle per source; `mdify check <bundle>…` re-derives its invariants;
+`mdify capture <url> [--keep …] [--out DIR] [--dry-sizes]` captures a web page in one browser visit (CONTRACT §2.1).
 
 Several sources in one run share the loaded models, so the first conversion is timed cold and the rest warm
 (kpis.json `time.cold`).
@@ -73,10 +74,49 @@ def _check(argv: list[str]) -> int:
     return status
 
 
+def _capture(argv: list[str]) -> int:
+    from .capture import DEFAULT_KEEP, LEVELS
+
+    parser = argparse.ArgumentParser(prog="mdify capture", description="Capture a web page in one browser visit: "
+                                     "every level is built and its size printed, the chosen ones are kept and the "
+                                     "rest deleted (CONTRACT §2.1). Then the HTML is converted as `mdify <url>` "
+                                     "would, with each word's box on the snapshot when the snapshot is kept.")
+    parser.add_argument("url", help="an http(s) web page")
+    parser.add_argument("--keep", default=",".join(DEFAULT_KEEP),
+                        help=f"comma-separated levels to keep, of {', '.join(LEVELS)} (default: %(default)s; "
+                        "link — source.json — is always kept)")
+    parser.add_argument("--out", type=pathlib.Path, help="write the kept levels and the bundle here instead of the "
+                        "cache (~/.cache/markdownify/bundles/<sha256>/)")
+    parser.add_argument("--dry-sizes", action="store_true", help="keep nothing: visit, measure and print the sizes")
+    arguments = parser.parse_args(argv)
+
+    from . import bundle, capture
+    from .fetch import FetchError, FetchRefused
+
+    try:
+        keep = capture.parse_keep(arguments.keep)
+    except ValueError as error:
+        parser.error(str(error))
+    try:
+        captured = capture.capture(arguments.url, keep, arguments.out, dry_sizes=arguments.dry_sizes,
+                                   log=lambda message: print(message, file=sys.stderr))
+    except (FetchRefused, FetchError, bundle.NoConverter) as error:
+        print(f"mdify capture: {arguments.url}: {error}", file=sys.stderr)
+        return 1
+    capture.main_report(captured, arguments.dry_sizes)
+    if captured.built is not None:
+        kpis = captured.built.kpis
+        print(f"  coverage {_fmt(kpis['coverage'])}  traceability {_fmt(kpis['traceability'])}  "
+              f"lost {_fmt(kpis['silently_lost'])}  unlinked {kpis['unlinked']}  inexact {kpis['inexact_words']}")
+    return 0 if captured.archive_check is None or captured.archive_check["ok"] else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == "check":
         return _check(argv[1:])
+    if argv and argv[0] == "capture":
+        return _capture(argv[1:])
     return _convert(argv)
 
 

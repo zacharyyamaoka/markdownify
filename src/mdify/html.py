@@ -187,11 +187,28 @@ def inventory(source: Source) -> list[SourceWord]:
     return [SourceWord(word["text"], page.grounding(index)) for index, word in enumerate(page.words)]
 
 
+def visible_page(source: Source) -> _Page:
+    """The inventory's words with their per-character offsets: `mdify.capture_snapshot` keys each one by xpath and
+    ordinal to find its measured box."""
+    return _Page(decoded_html(source), _run("inventory", source)["inventory"])
+
+
 def text_under(source: Source, grounding: dict) -> str:
-    """The text at `source_range` as a reader sees it: tags and comments removed, entities decoded."""
+    """The text at `source_range` as a reader sees it: tags and comments removed, entities decoded.
+
+    A grounding that also carries a `snapshot` box (CONTRACT §3.3) is one claim in two places, so both must hold
+    the text: when the words measured under the box (snapshot.json beside the source) do not contain it, the text
+    returned says what the box holds instead, and `mdify check` reports the word as not faithful."""
     source_range = grounding["html"]["source_range"]
     fragment = decoded_html(source)[source_range["start"]:source_range["end"]]
-    return html.unescape(_TAG_OR_COMMENT.sub("", fragment))
+    text = html.unescape(_TAG_OR_COMMENT.sub("", fragment))
+    if "snapshot" in grounding:
+        from mdify.capture_snapshot import disagreement
+
+        held = disagreement(pathlib.Path(source.path).parent, grounding["snapshot"], text)
+        if held is not None:
+            return f"{text} [snapshot box holds {held!r}]"
+    return text
 
 
 # --- conversion -------------------------------------------------------------------------------------------------

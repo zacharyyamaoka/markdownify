@@ -83,11 +83,14 @@ def index_of(conversion: Conversion, source: Source, pipeline: str, markdown_sha
 
 
 def build(target: str, out: pathlib.Path | None = None, *, cache: Cache | None = None, log=None,
-          reader: bool = False) -> Built:
+          reader: bool = False, resolved: tuple[str, str, str | None] | None = None) -> Built:
     """`reader=True` asks a converter that has a reading mode (the HTML one: Defuddle picks the content) to use it;
-    for a converter without one it is ignored, and `log` says so."""
+    for a converter without one it is ignored, and `log` says so.
+
+    `resolved` is (sha256, media type, url) of bytes already in the cache — `mdify capture` passes the page its
+    browser got, which looking the URL up again could swap for another retrieval of it."""
     cache = cache or Cache()
-    sha256, media_type, url = resolve(target, cache, log)
+    sha256, media_type, url = resolved or resolve(target, cache, log)
     module = converter_for(media_type)
     directory = pathlib.Path(out) if out else cache.bundle_dir(sha256)
     directory.mkdir(parents=True, exist_ok=True)
@@ -119,6 +122,14 @@ def build(target: str, out: pathlib.Path | None = None, *, cache: Cache | None =
     markdown = conversion.markdown.replace("\r\n", "\n").replace("\r", "\n")
     markdown_bytes = markdown.encode("utf-8")
     index = index_of(conversion, source, getattr(module, "PIPELINE", "A"), hashlib.sha256(markdown_bytes).hexdigest())
+    if media_type == "text/html" and (directory / "snapshot.json").is_file():
+        # CONTRACT §3.3: the snapshot level is kept, so every word also carries its box on snapshot.jpg.
+        from .capture_snapshot import attach
+
+        counts = attach(index, source, directory)
+        if log:
+            log(f"snapshot: {counts['boxed']} of {counts['linked']} linked words boxed "
+                f"({counts['by_key']} by xpath + offset, {counts['by_order']} by text order), {counts['no_box']} without")
     inventory = module.inventory(source)
     ledger = ledger_module.compute(index, markdown, inventory, f"{module.__name__}.inventory")
     kpis = ledger_module.kpis_of(index, ledger, timing)

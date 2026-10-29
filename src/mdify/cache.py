@@ -91,9 +91,9 @@ def write_json(path: pathlib.Path, value) -> None:
 
 
 def source_file(bundle: pathlib.Path) -> pathlib.Path | None:
-    """The `source.<ext>` of a bundle directory (not source.json, not source.warc.gz)."""
+    """The `source.<ext>` of a bundle directory (not source.json, not a web capture's archive)."""
     for candidate in sorted(bundle.glob("source.*")):
-        if candidate.name not in ("source.json", "source.warc.gz"):
+        if candidate.name not in ("source.json", "source.warc.gz", "source.wacz"):
             return candidate
     return None
 

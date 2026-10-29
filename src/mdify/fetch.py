@@ -165,6 +165,23 @@ class Fetcher:
                            retrieved_at=retrieved_at, status=status, from_cache=False)
         raise FetchError(f"{url}: more than {MAX_REDIRECTS} redirects")
 
+    def permit(self, url: str) -> str:
+        """The same gate `fetch` puts in front of every request — a refused host, then robots.txt — and this host's
+        pace, for a request someone else makes: `mdify capture`'s browser opens the page itself. Returns the
+        normalised URL; raises FetchRefused."""
+        if not url.startswith(("http://", "https://")):
+            raise FetchRefused(f"{url!r} is not an http(s) URL")
+        url = normalize_url(url)
+        reason = refused_reason(url)
+        if reason:
+            raise FetchRefused(f"{host_of(url)}: {reason}")
+        allowed, why = self.allowed(url)
+        if not allowed:
+            raise FetchRefused(why)
+        parsed = urllib.parse.urlparse(url)
+        self._turn(parsed.netloc.lower(), self._robots_for(f"{parsed.scheme}://{parsed.netloc}")[1])
+        return url
+
     def allowed(self, url: str) -> tuple[bool, str]:
         parsed = urllib.parse.urlparse(url)
         origin = f"{parsed.scheme}://{parsed.netloc}"
