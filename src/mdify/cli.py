@@ -19,6 +19,8 @@ def _convert(argv: list[str]) -> int:
     parser.add_argument("sources", nargs="+", help="a local file or an http(s) URL (PDF, HTML, PNG, JPEG)")
     parser.add_argument("--out", type=pathlib.Path, help="write the bundle here instead of the cache "
                         "(~/.cache/markdownify/bundles/<sha256>/); one source only")
+    parser.add_argument("--reader", action="store_true", help="web pages: Defuddle's reading mode picks the content "
+                        "(default: keep everything without a known reason to go); ignored for PDFs and images")
     arguments = parser.parse_args(argv)
     if arguments.out and len(arguments.sources) > 1:
         parser.error("--out takes one source")
@@ -29,7 +31,8 @@ def _convert(argv: list[str]) -> int:
     status = 0
     for target in arguments.sources:
         try:
-            built = bundle.build(target, arguments.out, log=lambda message: print(message, file=sys.stderr))
+            built = bundle.build(target, arguments.out, log=lambda message: print(message, file=sys.stderr),
+                                 reader=arguments.reader)
         except (FetchRefused, FetchError, bundle.NoConverter, FileNotFoundError) as error:
             print(f"mdify: {target}: {error}", file=sys.stderr)
             status = 1

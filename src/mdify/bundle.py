@@ -12,6 +12,7 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import importlib
+import inspect
 import json
 import pathlib
 import shutil
@@ -81,7 +82,10 @@ def index_of(conversion: Conversion, source: Source, pipeline: str, markdown_sha
     }
 
 
-def build(target: str, out: pathlib.Path | None = None, *, cache: Cache | None = None, log=None) -> Built:
+def build(target: str, out: pathlib.Path | None = None, *, cache: Cache | None = None, log=None,
+          reader: bool = False) -> Built:
+    """`reader=True` asks a converter that has a reading mode (the HTML one: Defuddle picks the content) to use it;
+    for a converter without one it is ignored, and `log` says so."""
     cache = cache or Cache()
     sha256, media_type, url = resolve(target, cache, log)
     module = converter_for(media_type)
@@ -101,7 +105,13 @@ def build(target: str, out: pathlib.Path | None = None, *, cache: Cache | None =
         module.warm_up()
     _warmed.add(module.__name__)
     loaded = time.perf_counter()
-    conversion = module.convert(source)
+    options = {}
+    if reader:
+        if "reader" in inspect.signature(module.convert).parameters:
+            options["reader"] = True
+        elif log:
+            log(f"mdify: --reader applies to web pages only; ignored for {media_type}")
+    conversion = module.convert(source, **options)
     finished = time.perf_counter()
     timing = {"seconds": round(finished - loaded, 3), "cold": cold,
               "model_load_seconds": round(loaded - started, 3)}

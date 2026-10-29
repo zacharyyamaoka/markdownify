@@ -196,3 +196,38 @@ def test_end_to_end_pdf(tmp_path, monkeypatch):
     markdown = (built.directory / "document.md").read_text()
     assert "Rated torque 20 Nm at 24 V." in markdown
     assert all(result.ok for result in check.check(built.directory))
+
+
+def test_reader_is_passed_only_to_a_converter_that_has_it(tmp_path, monkeypatch):
+    from mdify import converters
+
+    calls = []
+
+    class WithReader:
+        __name__ = "fake.with_reader"
+        MEDIA_TYPES = ("application/pdf",)
+        PIPELINE = "A"
+
+        @staticmethod
+        def convert(source, *, reader=False):
+            calls.append(reader)
+            return converters.Conversion(markdown="", blocks=[], words=[], dropped=[], pages=[])
+
+        @staticmethod
+        def inventory(source):
+            return None
+
+    class WithoutReader(WithReader):
+        @staticmethod
+        def convert(source):
+            calls.append("plain")
+            return converters.Conversion(markdown="", blocks=[], words=[], dropped=[], pages=[])
+
+    messages = []
+    source = write_pdf(tmp_path / "in.pdf")
+    for fake in (WithReader, WithoutReader):
+        monkeypatch.setattr(bundle, "converter_for", lambda media_type, fake=fake: fake)
+        bundle.build(str(source), tmp_path / fake.__name__, cache=Cache(tmp_path / "cache"), reader=True,
+                     log=messages.append)
+    assert calls == [True, "plain"]
+    assert messages == ["mdify: --reader applies to web pages only; ignored for application/pdf"]
