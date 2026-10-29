@@ -50,6 +50,9 @@ _QUOTE = re.compile(r"^\s{0,3}(>\s?)+")
 _BULLET = re.compile(r"^\s*([-*+]|\d{1,9}[.)])(?=\s)")
 _TAG = re.compile(r"<!--.*?-->|</?[A-Za-z][A-Za-z0-9-]*(\s+[^<>]*)?/?>", re.S)
 _IMAGE = re.compile(r"!\[[^\]\n]*\]\([^)\n]*\)")
+_CALLOUT = re.compile(r"^\s*\[![A-Za-z][\w-]*\][+-]?(?=\s|$)")       # Obsidian / GitHub alert: > [!NOTE]
+_FOOTNOTE_DEFINITION = re.compile(r"^\s{0,3}\[\^[^\]\s]+\]:")
+_FOOTNOTE_REFERENCE = re.compile(r"\[\^[^\]\s]+\]")
 _LINK_TAIL = re.compile(r"\]\(([^()\s]*|<[^>\n]*>)(\s+\"[^\"\n]*\")?\)")
 
 
@@ -80,6 +83,9 @@ def content_mask(markdown: str) -> bytes:
         if match.start() not in escaped:
             mark(match.start(), match.end(), BREAK)
     for match in _IMAGE.finditer(markdown):
+        if match.start() not in escaped:
+            mark(match.start(), match.end(), BREAK)
+    for match in _FOOTNOTE_REFERENCE.finditer(markdown):
         if match.start() not in escaped:
             mark(match.start(), match.end(), BREAK)
 
@@ -117,10 +123,14 @@ def _escaped_positions(markdown: str) -> set[int]:
 
 def _mark_line(markdown: str, offset: int, line: str, mask: bytearray, escaped: set[int]) -> None:
     prefix_end = 0
-    for pattern in (_QUOTE, _HEADING, _BULLET):
-        match = pattern.match(line[prefix_end:])
-        if match:
-            prefix_end += match.end()
+    progressed = True
+    while progressed:  # "> - ## Title": a quote, a bullet and a heading, in any nesting
+        progressed = False
+        for pattern in (_QUOTE, _BULLET, _HEADING, _CALLOUT, _FOOTNOTE_DEFINITION):
+            match = pattern.match(line[prefix_end:])
+            if match and match.end():
+                prefix_end += match.end()
+                progressed = True
     for position in range(offset, offset + prefix_end):
         if not markdown[position].isspace():
             mask[position] = BREAK
@@ -130,7 +140,8 @@ def _mark_line(markdown: str, offset: int, line: str, mask: bytearray, escaped: 
         start = offset + match.start()
         if start in escaped or mask[start] == BREAK:
             continue
-        opener = _matching_bracket(markdown, offset, start, escaped)
+        paragraph_start = markdown.rfind("\n\n", 0, start) + 1
+        opener = _matching_bracket(markdown, paragraph_start, start, escaped)
         if opener is None:
             continue
         mask[opener] = SYNTAX
@@ -395,6 +406,11 @@ def _align_stretch(stretch, markdown_indices, source_indices, markdown_normal, s
         spans: dict[int, list[int]] = {}
         for j, k in pairs:
             spans.setdefault(j, []).append(k)
+        if len(spans) > 1 and not _contiguous(spans, stretch_source, source_normal):
+            # WHY: letters picked from unrelated words ("M" of "Maximum" + "ode" of "Model") are not the source
+            # saying "Mode". Keep only the word that gave the most letters, scored against what it really says.
+            best = max(spans, key=lambda j: len(spans[j]))
+            spans = {best: spans[best]}
         covered = "".join(source_normal[j][0][min(ks):max(ks) + 1] for j, ks in spans.items())
         score = Levenshtein.normalized_similarity(markdown_normal[i][0], covered)
         if score < min_score:
@@ -404,6 +420,25 @@ def _align_stretch(stretch, markdown_indices, source_indices, markdown_normal, s
             origin = source_normal[j][1]
             sources.append((j, origin[min(ks)], origin[max(ks)] + 1))
         yield i, WordAlignment(sources, round(score, 4))
+
+
+def _contiguous(spans: dict[int, list[int]], stretch_source: list[int], source_normal) -> bool:
+    """True when the covered characters run unbroken across neighbouring source words: the first word to its end,
+    every middle word whole, the last word from its start — a word the converter joined ("N·m" from "N", "·", "m")."""
+    position = {j: n for n, j in enumerate(stretch_source)}
+    ordered = sorted(spans, key=position.__getitem__)
+    if [position[j] for j in ordered] != list(range(position[ordered[0]], position[ordered[0]] + len(ordered))):
+        return False
+    for n, j in enumerate(ordered):
+        ks = sorted(spans[j])
+        last = len(source_normal[j][0]) - 1
+        if ks != list(range(ks[0], ks[-1] + 1)):
+            return False
+        if n > 0 and ks[0] != 0:
+            return False
+        if n < len(ordered) - 1 and ks[-1] != last:
+            return False
+    return True
 
 
 def _align_exact(stretch_markdown, stretch_source, markdown_normal, source_normal):

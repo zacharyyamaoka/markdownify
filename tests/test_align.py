@@ -128,3 +128,34 @@ def test_glued_source_word_is_shared_between_groups():
                                   groups=[([0], [0]), ([1], [0])])
     assert alignments[0].sources == [(0, 0, 11)] and alignments[0].score == 1.0
     assert alignments[1].sources == [(0, 11, 20)] and alignments[1].score == 1.0
+
+
+# --- the HTML lane's findings (2026-10-29) ----------------------------------------------------------------------
+def test_letters_stitched_from_unrelated_source_words_score_below_the_floor():
+    # "M" from "Maximum" and "ode" from "Model" must not make an exact "Mode".
+    alignment = align_word_spans(["Mode"], ["Maximum", "Model"])[0]
+    assert alignment.score < 0.9
+    assert len({source for source, _start, _end in alignment.sources}) <= 1
+
+
+def test_adjacent_source_words_joined_at_their_boundary_still_score_one():
+    alignment = align_word_spans(["torque2"], ["torque", "2"])[0]
+    assert alignment.score == 1.0 and [source for source, _s, _e in alignment.sources] == [0, 1]
+
+
+def test_heading_after_a_list_bullet_is_syntax():
+    assert texts("- ## Specs\n") == ["Specs"]
+
+
+def test_callout_marker_is_syntax():
+    assert texts("> [!success] Rated torque\n") == ["Rated", "torque"]
+    assert texts("> [!NOTE]-\n> body\n") == ["body"]
+
+
+def test_brackets_of_a_multi_line_link_are_syntax():
+    assert texts("See [the full\ndatasheet](https://example.com/a.pdf) now") == ["See", "the", "full", "datasheet", "now"]
+
+
+def test_footnote_markers_are_syntax():
+    assert texts("Peak torque[^1] is 60 Nm.\n\n[^1]: Measured at 25 °C.\n") == \
+        ["Peak", "torque", "is", "60", "Nm.", "Measured", "at", "25", "°C."]
