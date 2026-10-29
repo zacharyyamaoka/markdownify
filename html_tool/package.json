@@ -1,0 +1,13 @@
+{
+  "name": "mdify-html-tool",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Markdownify pipeline A for web pages: Defuddle picks the content and writes the markdown, jsdom's node locations tie each piece back to the fetched HTML.",
+  "license": "MIT",
+  "dependencies": {
+    "defuddle": "0.19.6",
+    "entities": "8.1.0",
+    "jsdom": "30.1.3"
+  }
+}
