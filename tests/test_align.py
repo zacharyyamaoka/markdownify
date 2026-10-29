@@ -1,0 +1,117 @@
+"""The aligner on its own: what counts as a markdown word, and how words find their source."""
+
+from mdify.align import (align_word_spans, align_words, markdown_words, normalize, word_ranges_of)
+
+
+def texts(markdown):
+    return [word.text for word in markdown_words(markdown)]
+
+
+def test_heading_bullets_and_emphasis_are_not_words():
+    markdown = "# Rated torque\n\n- **20** Nm\n1. peak _60_ Nm\n> quoted line\n"
+    assert texts(markdown) == ["Rated", "torque", "20", "Nm", "peak", "60", "Nm", "quoted", "line"]
+
+
+def test_word_ranges_cover_only_content():
+    markdown = "## Title here"
+    assert [markdown[start:end] for start, end in word_ranges_of(markdown)] == ["Title", "here"]
+
+
+def test_gfm_table_pipes_and_separator_row_are_syntax():
+    markdown = "| Model | Torque |\n|---|:---:|\n| AK80-9 | 9 Nm |\n"
+    assert texts(markdown) == ["Model", "Torque", "AK80-9", "9", "Nm"]
+
+
+def test_pipes_without_spaces_still_split_cells():
+    assert texts("|a|b|\n|-|-|\n|1|2|") == ["a", "b", "1", "2"]
+
+
+def test_escaped_characters_are_content_and_the_backslash_is_not():
+    markdown = r"| a\|b | 5\*3 | snake_case |"
+    words = markdown_words(markdown)
+    assert [word.text for word in words] == ["a|b", "5*3", "snake_case"]
+    # The range spans the escape, so the backslash is inside a word but not in its text.
+    assert markdown[words[0].start:words[0].end] == r"a\|b"
+
+
+def test_link_urls_and_images_are_not_words():
+    markdown = "See [the datasheet](https://example.com/a.pdf) and ![plot](p.png) now"
+    assert texts(markdown) == ["See", "the", "datasheet", "and", "now"]
+
+
+def test_raw_html_table_tags_split_words_and_entities_decode():
+    markdown = "<table><tr><th colspan=\"2\">Rated&amp;Peak</th></tr><tr><td>20</td><td>60</td></tr></table>"
+    assert texts(markdown) == ["Rated&Peak", "20", "60"]
+
+
+def test_code_fence_lines_are_syntax_and_code_is_content():
+    assert texts("```python\nx = a*b\n```\n") == ["x", "=", "a*b"]
+
+
+def test_normalize_expands_ligatures_and_drops_soft_hyphens():
+    assert normalize("eﬃcient") == "efficient"
+    assert normalize("tor­que") == "torque"
+
+
+def test_exact_words_align_with_score_one():
+    markdown = "Rated torque 20 Nm"
+    result = align_words(markdown, word_ranges_of(markdown), ["Rated", "torque", "20", "Nm"])
+    assert result == [(0, 1.0), (1, 1.0), (2, 1.0), (3, 1.0)]
+
+
+def test_inserted_word_is_unlinked_and_missing_word_skipped():
+    markdown = "Rated invented torque Nm"
+    result = align_words(markdown, word_ranges_of(markdown), ["Rated", "torque", "20", "Nm"])
+    assert result[0] == (0, 1.0)
+    assert result[1][0] is None
+    assert result[2] == (1, 1.0)
+    assert result[3] == (3, 1.0)
+
+
+def test_split_word_finds_both_halves_of_its_source():
+    alignments = align_word_spans(["10", "A", "max"], ["10A", "max"])
+    assert alignments[0].sources == [(0, 0, 2)]
+    assert alignments[1].sources == [(0, 2, 3)]
+    assert alignments[2].sources == [(1, 0, 3)] and alignments[2].score == 1.0
+
+
+def test_joined_words_point_at_every_source_word():
+    alignment = align_word_spans(["N·m"], ["N", "·", "m"])[0]
+    assert [source for source, _start, _end in alignment.sources] == [0, 1, 2]
+    assert alignment.score == 1.0
+
+
+def test_changed_word_is_linked_below_one():
+    alignment = align_word_spans(["torqve"], ["torque"])[0]
+    assert alignment.index == 0 and 0.5 <= alignment.score < 1.0
+
+
+def test_unrelated_word_is_left_unlinked():
+    assert align_word_spans(["xyz"], ["torque"])[0].index is None
+
+
+def test_ligature_in_source_aligns_exactly_and_maps_back_to_the_original_characters():
+    alignment = align_word_spans(["efficient"], ["eﬃcient"])[0]
+    assert alignment.score == 1.0 and alignment.sources == [(0, 0, 7)]
+
+
+def test_blocks_keep_reordered_columns_apart():
+    # Two columns: the markdown reads left then right; the source text layer interleaves them line by line.
+    markdown = "alpha beta gamma\n\none two three"
+    source = ["alpha", "one", "beta", "two", "gamma", "three"]
+    ranges = word_ranges_of(markdown)
+    blocks = [(0, 16, [0, 2, 4]), (18, len(markdown), [1, 3, 5])]
+    result = align_words(markdown, ranges, source, block_spans=blocks)
+    assert [index for index, _score in result] == [0, 2, 4, 1, 3, 5]
+    assert all(score == 1.0 for _index, score in result)
+
+
+def test_word_missed_by_its_block_is_found_in_the_second_pass():
+    markdown = "alpha beta"
+    result = align_words(markdown, word_ranges_of(markdown), ["alpha", "beta"], block_spans=[(0, 10, [0])])
+    assert result == [(0, 1.0), (1, 1.0)]
+
+
+def test_a_source_word_is_claimed_once():
+    alignments = align_word_spans(["Nm", "Nm"], ["Nm"], groups=[([0], [0]), ([1], [0])])
+    assert alignments[0].index == 0 and alignments[1].index is None
