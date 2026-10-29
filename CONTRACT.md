@@ -244,4 +244,4 @@ Fragment built from `text_quote` (web page).
 A standalone project, `/home/bam/source-highlighter` (Zach, 2026-10-29: a stable sub-assembly anything can use):
 source + locations + style (highlight, box, underline, spotlight, blackout) in → the source, highlighted, out. Its
 CONTRACT.md owns the Location format; every `grounding` in this contract is one of its Locations. The Markdownify demo
-(a Clank plugin, `clank-markdownify`) uses it as its left pane.
+(`mdify view`, Markdownify's own page) uses it as its left pane.
