@@ -1,0 +1,11 @@
+{
+  "running_header": ["Kestrel Motion", "KM80-64 Datasheet", "Rev 1.2"],
+  "running_footer": ["www.kestrel-motion.example", "Page 1 of 1"],
+  "nav": {
+    "Robot Joint Modules": ["KM45-10", "KM60-6", "KM70-10", "KM80-6", "KM80-9", "KM80-64", "KM100-10"],
+    "Dynamic Modules": ["KD50", "KD60", "KD80", "KD100"],
+    "Servo Motors": ["KS3505", "KS4006", "KS5010", "KS6012"],
+    "Drivers": ["KDrive Mini", "KDrive Pro"],
+    "Support": ["Downloads", "Firmware", "Contact"]
+  }
+}
