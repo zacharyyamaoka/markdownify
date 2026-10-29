@@ -766,7 +766,7 @@ def build(fresh: bool) -> pathlib.Path:
         f'truth words in the right spot on PDF, 920 on PNG. A, with no AI, gets 0.982 / 0.893 at about 1 s a page.{c(1)}</li>'
         f'<li><b>Real web pages: coverage 0.510 → 0.987.</b> The shipped reading mode was silently dropping whole spec '
         f'tables; the coverage number caught it.{c(4, 5)}</li>'
-        f'<li><b>Cite the cell, not a quote.</b> Both options read about 98% right. Option 1 can prove 98% of the '
+        f'<li><b>Cite the cell, not a quote.</b> Claude read about 98% of the values right under either option (Codex, under Option 2, proposed only 72%). Option 1 can prove 98% of the '
         f'fields (HTML, PDF); Option 2 about a third.{c(6)}</li>'
         f'<li><b>The KPIs caught five real bugs</b>, worst a table header shifted one column that put 350.4W under '
         f'the wrong model.{c(5, 12)}</li>'
@@ -909,7 +909,7 @@ def build(fresh: bool) -> pathlib.Path:
         ["Option 2 · Claude", "0.395", "0.351", "0"],
         ["Option 2 · Codex", "0.404", "0.395", "0"],
     ], caption="Precision is 1.0 for every kept value, both options. Location correct: Option 1 1.0, Option 2 0.91–0.95."))
-    add('<div class="callout"><b>Both read about 98% right; Option 1 can prove 98%, Option 2 about a third.</b> The '
+    add('<div class="callout"><b>Claude read about 98% right under both options; Option 1 can prove 98%, Option 2 about a third.</b> The '
         'difference is not reading, it is what code can check. A quote cannot bind a number to its row label and its '
         'model column in a comparison table; a cell id can. Option 2 keeps nothing on PNG because its checker has no '
         f'OCR — robotparts\' rule for image-only sources.{c(6)}</div>'
