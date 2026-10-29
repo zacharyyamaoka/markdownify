@@ -642,21 +642,23 @@ def normalised(box, width, height) -> list[float]:
     return [round(box[0] / width, 6), round(box[1] / height, 6), round(box[2] / width, 6), round(box[3] / height, 6)]
 
 
-def region_words(slots: list[Slot], slot_ids, char_location) -> list[tuple[str, str, int, list]]:
-    """(region, text, slot id, per-character locations) of each word of the region slots: split at whitespace and at slot
+def region_words(slots: list[Slot], slot_ids, char_location) -> list[tuple[str, str, int, int, list]]:
+    """(region, text, slot id, first character index, per-character locations) of each word of the region slots: split at whitespace and at slot
     edges (a slot edge is an element edge, which a reader also sees as a break)."""
     found = []
     for slot_id in slot_ids:
         slot = slots[slot_id]
         if slot.region is None:
             continue
-        current, locations = "", []
+        current, locations, first = "", [], 0
         for index, character in enumerate(slot.text + " "):
             if character.isspace():
                 if current:
-                    found.append((slot.region, current, slot_id, locations))
+                    found.append((slot.region, current, slot_id, first, locations))
                 current, locations = "", []
             else:
+                if not current:
+                    first = index
                 current += character
                 locations.append(char_location(slot_id, index))
     return found
@@ -672,8 +674,12 @@ def write_json(path: pathlib.Path, value) -> None:
 
 def write_bundle(arm_dir: pathlib.Path, *, source_bytes: bytes, source_name: str, media_type: str,
                  document: str, pages: list, blocks: list, words: list, dropped: list,
-                 source_words: list, ladder: dict, case_id: str, arm: str) -> None:
-    """One truth bundle in CONTRACT.md's format, plus the harness-only truth.json."""
+                 source_words: list, ladder: dict, case_id: str, arm: str, inventory: bool) -> None:
+    """One truth bundle in CONTRACT.md's format, plus the harness-only truth.json.
+
+    `inventory` False (the image arm) writes the ledger's source side as "no inventory", which CONTRACT §5 allows
+    for images and which a converter given only the image must write too; truth.json keeps the full inventory
+    either way, and score.py grades from that."""
     arm_dir.mkdir(parents=True, exist_ok=True)
     source_sha = sha256(source_bytes)
     (arm_dir / source_name).write_bytes(source_bytes)
@@ -688,32 +694,45 @@ def write_bundle(arm_dir: pathlib.Path, *, source_bytes: bytes, source_name: str
         "range_units": "unicode_codepoints",
         "pages": pages, "blocks": blocks, "words": words, "dropped": dropped})
 
+    # ledger.json and kpis.json use the field names mdify's core writes (src/mdify/ledger.py); CONTRACT §5–6 name
+    # the quantities but not the JSON shape. The source side is the truth inventory ("harness-truth"), not
+    # pdfplumber words, because the truth knows every word's fate exactly.
+    fates = []
     dropped_counts: dict[str, int] = {}
     flagged_counts: dict[str, int] = {}
     for word in source_words:
         if word["fate"] == "dropped":
             dropped_counts[word["reason"]] = dropped_counts.get(word["reason"], 0) + 1
+            fates.append(f"dropped:{word['reason']}")
         elif word["fate"] == "flagged":
             flagged_counts[word["kind"]] = flagged_counts.get(word["kind"], 0) + 1
-    linked = sum(1 for word in source_words if word["fate"] == "linked")
+            fates.append(f"flagged:{word['kind']}")
+        else:
+            fates.append("linked")
+    linked = fates.count("linked")
+    source_side = {"inventory": "harness-truth", "available": True, "words": len(source_words), "linked": linked,
+                   "dropped": sum(dropped_counts.values()), "flagged": sum(flagged_counts.values()), "lost": 0,
+                   "dropped_by_reason": dropped_counts, "flagged_by_kind": flagged_counts, "lost_words": [],
+                   "fates": fates} if inventory else {"inventory": "none", "available": False}
     write_json(arm_dir / "ledger.json", {
         "schema": "markdownify/ledger@0",
-        "source": {"words": len(source_words), "linked": linked, "dropped": dropped_counts,
-                   "flagged": flagged_counts, "lost": 0},
-        "markdown": {"words": len(words), "linked": len(words), "unlinked": 0},
-        "lost": [], "unlinked": []})
-    seen: dict[str, int] = {}
-    represented: dict[str, int] = {}
-    for kind_and_flag in ladder.values():
-        kind, is_represented = kind_and_flag
-        seen[kind] = seen.get(kind, 0) + 1
-        represented[kind] = represented.get(kind, 0) + int(is_represented)
+        "source": source_side,
+        "markdown": {"words": len(words), "linked": len(words), "unlinked": 0, "inexact": 0,
+                     "unlinked_words": [], "inexact_words": []}})
+    ladder_counts = {kind: {"seen": 0, "represented": 0}
+                     for kind in ("prose", "simple_table", "complex_table", "plot", "diagram", "figure")}
+    for kind, is_represented in ladder.values():
+        ladder_counts[kind]["seen"] += 1
+        ladder_counts[kind]["represented"] += int(is_represented)
+    for counts in ladder_counts.values():
+        counts["ratio"] = round(counts["represented"] / counts["seen"], 4) if counts["seen"] else None
+    content_words = len(source_words) - sum(dropped_counts.values()) - sum(flagged_counts.values())
     write_json(arm_dir / "kpis.json", {
         "schema": "markdownify/kpis@0",
-        "silently_lost": 0, "unlinked": 0, "coverage": 1.0, "traceability": 1.0,
-        "ladder": {kind: {"represented": represented[kind], "seen": seen[kind],
-                          "rate": round(represented[kind] / seen[kind], 4)} for kind in seen},
-        "time": None})
+        "silently_lost": 0 if inventory else None, "unlinked": 0,
+        "coverage": round(linked / content_words, 4) if content_words and inventory else None,
+        "traceability": 1.0, "inexact_words": 0,
+        "ladder": ladder_counts, "time": None})
     write_json(arm_dir / "truth.json", {
         "schema": "harness/truth@0", "case": case_id, "arm": arm,
         "source_words": source_words,
@@ -902,6 +921,23 @@ def render_case(case_dir: pathlib.Path, out_root: pathlib.Path, browser) -> dict
             rows.append(row)
         return rows
 
+    # Source words are page words: markdown words drawn touching each other ("torque" + superscript "1") are one
+    # word to a reader and to a text-layer inventory, so they are one inventory row (linked to both).
+    def dom_box(location):
+        slot_id, index = location
+        return measured["slots"][str(slot_id)]["chars"][index]
+
+    page_word_groups: list[list[int]] = []
+    for index, word in enumerate(markdown_words):
+        if page_word_groups:
+            left = dom_box(word_chars(markdown_words[page_word_groups[-1][-1]])[-1])
+            right = dom_box(word_chars(word)[0])
+            shared_height = min(left[3], right[3]) - max(left[1], right[1])
+            if shared_height > 0.3 * min(left[3] - left[1], right[3] - right[1]) and -0.5 <= right[0] - left[2] < 1.0:
+                page_word_groups[-1].append(index)
+                continue
+        page_word_groups.append([index])
+
     ladder = {}
     for block in blocks:
         if block.type in ("heading", "paragraph", "list_item", "footnote", "caption"):
@@ -933,9 +969,22 @@ def render_case(case_dir: pathlib.Path, out_root: pathlib.Path, browser) -> dict
             def region_grounding(region):
                 return {"page": 1, "box": normalised(measured["boxes"]["r" + region], PAGE_WIDTH_PX, PAGE_HEIGHT_PX)}
 
-        source_words = [{"text": word.text, "grounding": words[index]["grounding"], "fate": "linked", "word": index}
-                        for index, word in enumerate(markdown_words)]
-        for region, text, slot_id, locations in region_words(slots, slot_ids, location):
+        # Source words in page order (the order of the text in the page's DOM), as an inventory reads them.
+        slot_order = {slot_id: position for position, slot_id in enumerate(slot_ids)}
+        ordered = []
+        for group in page_word_groups:
+            text = "".join(markdown_words[index].text for index in group)
+            first, last = words[group[0]]["grounding"], words[group[-1]]["grounding"]
+            if arm == "html":
+                grounding = web_grounding(first["html"]["source_range"]["start"], last["html"]["source_range"]["end"],
+                                          first["html"]["xpath"], text)
+            else:
+                boxes = [words[index]["grounding"]["box"] for index in group]
+                grounding = {"page": 1, "box": [round(value, 6) for value in union(boxes)]}
+            first_char = word_chars(markdown_words[group[0]])[0]
+            ordered.append(((slot_order[first_char[0]], first_char[1]),
+                            {"text": text, "grounding": grounding, "fate": "linked", "words": group}))
+        for region, text, slot_id, first, locations in region_words(slots, slot_ids, location):
             if arm == "html":
                 grounding = web_grounding(locations[0], locations[-1] + 1, web.slot_xpath[slot_id], text)
             else:
@@ -945,7 +994,8 @@ def render_case(case_dir: pathlib.Path, out_root: pathlib.Path, browser) -> dict
                 row.update(fate="dropped", reason=DROP_REASONS[region])
             else:
                 row.update(fate="flagged", kind=FLAG_KINDS[region])
-            source_words.append(row)
+            ordered.append(((slot_order[slot_id], first), row))
+        source_words = [row for _, row in sorted(ordered, key=lambda pair: pair[0])]
         present_regions = {slots[s].region for s in slot_ids if slots[s].region}
         dropped = [{"grounding": region_grounding(region), "reason": DROP_REASONS[region]}
                    for region in DROP_REASONS if region in present_regions]
@@ -958,7 +1008,8 @@ def render_case(case_dir: pathlib.Path, out_root: pathlib.Path, browser) -> dict
             source_bytes, source_name, media_type = web_html.encode("utf-8"), "source.html", "text/html"
         write_bundle(out_dir / arm, source_bytes=source_bytes, source_name=source_name, media_type=media_type,
                      document=document, pages=pages, blocks=block_rows(arm), words=words, dropped=dropped,
-                     source_words=source_words, ladder=ladder, case_id=case_id, arm=arm)
+                     source_words=source_words, ladder=ladder, case_id=case_id, arm=arm,
+                     inventory=arm != "png")
     (out_dir / "source.pdf").unlink()
     return selfcheck
 

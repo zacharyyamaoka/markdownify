@@ -119,7 +119,9 @@ def test_truth_scores_perfect(rendered, case, arm):
         (words, 0, 0, 0)
     assert location["median_iou"] == 1.0
     ledger = scores["ledger"]
-    assert (ledger["lost"], ledger["unlinked"], ledger["linked"]) == (0, 0, words)
+    linked_page_words = sum(1 for word in truth_extra["source_words"] if word["fate"] == "linked")
+    assert (ledger["lost"], ledger["unlinked"], ledger["linked"]) == (0, 0, linked_page_words)
+    assert ledger["coverage"] == ledger["traceability"] == 1.0
     expected_dropped, expected_flagged = {}, {}
     for word in truth_extra["source_words"]:
         if word["fate"] == "dropped":
