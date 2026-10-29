@@ -182,7 +182,7 @@ How it maps onto `part.json` is RobotParts' call (its citation shape is moving o
 
 ## 9. Source Highlighter
 
-Inside Markdownify. In: a bundle (or raw source) plus a list of `{grounding, label, color}`. Out: the source drawn
-with yellow highlights — PDF via PDF.js / `react-pdf-highlighter-extended`, HTML via the CSS Custom Highlight API on
-the archived copy, images via an overlay. The Markdownify demo (a Clank plugin, `clank-markdownify`) uses it as its
-left pane.
+A standalone project, `/home/bam/source-highlighter` (Zach, 2026-10-29: a stable sub-assembly anything can use):
+source + locations + style (highlight, box, underline, spotlight, blackout) in → the source, highlighted, out. Its
+CONTRACT.md owns the Location format; every `grounding` in this contract is one of its Locations. The Markdownify demo
+(a Clank plugin, `clank-markdownify`) uses it as its left pane.
