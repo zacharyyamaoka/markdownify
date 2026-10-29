@@ -31,11 +31,33 @@ link against the exact bytes after the worktree that made it is gone (the same r
 | File | What it holds |
 |---|---|
 | `source.json` | Fetch record: `{sha256, bytes, media_type, retrievals: [{url, final_url, retrieved_at, http_status}]}` — robotparts `tools/ingestor/cache.py`'s shape, unchanged. |
-| `source.<ext>` | The bytes exactly as fetched or read. Web pages are also kept as `source.warc.gz` (warcio, `WARC-Payload-Digest: sha256:…`). |
+| `source.<ext>` | The bytes exactly as fetched or read. A web page can also keep a snapshot and a full archive (§2.1). |
 | `document.md` | The markdown. UTF-8, LF line endings. Tables are GFM tables; a table GFM cannot hold (merged cells) is an HTML `<table>` inside the markdown. |
 | `index.json` | The span index (§3): where every block, table cell and word of `document.md` came from. |
 | `ledger.json` | The coverage ledger (§5): the fate of every source word and every markdown word. |
 | `kpis.json` | The run's KPIs (§6). |
+
+### 2.1 Capture levels (web pages)
+
+A URL is captured in one browser visit; the caller picks what to keep. `mdify capture <url> --keep html,snapshot,archive`
+prints each level's measured size, keeps the chosen ones and discards the rest.
+WHY a menu with sizes (Zach, 2026-10-29): "it's not either or. we should just provide all the options and then provide
+the estimate of the storage size, so then the user can pick."
+
+| Level | File(s) | Measured size (CubeMars AK80-9, 2026-10-29) | What it gives |
+|---|---|---|---|
+| `link` | `source.json` only | ~1 KB | where and when |
+| `html` | `source.html` | 192 KB (39 KB gzipped) | the bytes Markdownify reads and values cite |
+| `snapshot` | `snapshot.jpg` + every word's box at capture | 1.4 MB | what the page looked like; highlight as page + box |
+| `pdf` | `snapshot.pdf` | 5.2 MB | a printable copy with a text layer |
+| `archive` | `source.wacz` (every response the browser got: HTML, CSS, JS, images, fonts) | 4.9 MB for a site's first page, 2.1–2.7 MB for each further page (shared files stored once) | the page replayed offline, exactly as delivered |
+
+- **Default:** `html` always; `snapshot` + `archive` for every page a kept value cites; bulk scraping keeps `html` only.
+  WHY `html` always: a value is traceable only to bytes that still exist; a later re-capture can differ from what was
+  extracted.
+- **Archive format:** WACZ (Webrecorder's zipped WARC + index), WARC being ISO 28500, the web-archiving standard.
+  Replay with ReplayWeb.page, which runs in the browser from the file alone, so a static site can serve it.
+- PDFs and images are their own complete archive: `source.<ext>`.
 
 ## 3. The span index (`index.json`)
 
@@ -175,10 +197,10 @@ plus an optional `model` (the part number to pick in a table with one column per
 
 RobotParts stores, per value: value, unit, raw, the source record (url, sha256, retrieved_at) and the grounding.
 How it maps onto `part.json` is RobotParts' call (its citation shape is moving on `lane/jmc-sources`; read it first).
-**"Go to source":**
-- on robotparts.dev (which may not host makers' files, SCHEMA2 §1.2): the maker's live URL with `#page=N` (PDF) or
-  a Text Fragment built from `text_quote` (web page);
-- where the cached bytes exist (Zach's machine): the Source Highlighter with the exact box.
+RobotParts stores the captured copy too (Zach, 2026-10-29: "we are able to store the datasheet for traceability"),
+content-addressed by sha256 so a file shared by many parts is stored once. **"Go to source"** opens that stored copy
+in the Source Highlighter with the exact box; the maker's live URL stays beside it, with `#page=N` (PDF) or a Text
+Fragment built from `text_quote` (web page).
 
 ## 9. Source Highlighter
 
