@@ -1,0 +1,75 @@
+{
+ "case": "12-full-datasheet",
+ "arm": "pdf",
+ "why": "one-case test of the box format before the full run (vlm.py --coordinates)",
+ "runs": {
+  "claude-pixel": {
+   "location": {
+    "correct": 85,
+    "misplaced": 6,
+    "unlinked": 0,
+    "ambiguous": 0
+   },
+   "median_iou": 0.6998,
+   "ned": 0.0,
+   "ledger_lost": 5,
+   "words_below_1_vs_text_layer": 37,
+   "markdown_words": 91,
+   "seconds": 20.1,
+   "model": [
+    "claude-opus-5-5"
+   ]
+  },
+  "claude-unit": {
+   "location": {
+    "correct": 85,
+    "misplaced": 6,
+    "unlinked": 0,
+    "ambiguous": 0
+   },
+   "median_iou": 0.7001,
+   "ned": 0.0,
+   "ledger_lost": 5,
+   "words_below_1_vs_text_layer": 43,
+   "markdown_words": 91,
+   "seconds": 19.1,
+   "model": [
+    "claude-opus-5-5"
+   ]
+  },
+  "codex-pixel": {
+   "location": {
+    "correct": 85,
+    "misplaced": 6,
+    "unlinked": 0,
+    "ambiguous": 0
+   },
+   "median_iou": 0.7064,
+   "ned": 0.0,
+   "ledger_lost": 4,
+   "words_below_1_vs_text_layer": 38,
+   "markdown_words": 91,
+   "seconds": 35.6,
+   "model": [
+    "gpt-6.1-sol"
+   ]
+  },
+  "codex-unit": {
+   "location": {
+    "correct": 85,
+    "misplaced": 6,
+    "unlinked": 0,
+    "ambiguous": 0
+   },
+   "median_iou": 0.7065,
+   "ned": 0.0,
+   "ledger_lost": 4,
+   "words_below_1_vs_text_layer": 39,
+   "markdown_words": 91,
+   "seconds": 52.4,
+   "model": [
+    "gpt-6.1-sol"
+   ]
+  }
+ }
+}

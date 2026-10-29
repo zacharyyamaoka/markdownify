@@ -1,0 +1,536 @@
+{
+ "key": "mdify",
+ "command": "uv run mdify {source} --out {bundle}",
+ "arm": "png",
+ "ran_at": "2026-10-29T20:57:25Z",
+ "cases": {
+  "01-prose-spec": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/01-prose-spec/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/01-prose-spec/png/bundle",
+   "seconds": 15.053,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 152,
+    "teds_mean": null,
+    "header_path_accuracy": null,
+    "location": {
+     "correct": 140,
+     "misplaced": 12,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.921053,
+    "median_iou": 0.6108,
+    "ledger": {
+     "linked": 140,
+     "lost": 12,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 6,
+      "represented": 6,
+      "truth_represented": 6
+     }
+    }
+   }
+  },
+  "02-spec-list": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/02-spec-list/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/02-spec-list/png/bundle",
+   "seconds": 14.483,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 68,
+    "teds_mean": null,
+    "header_path_accuracy": null,
+    "location": {
+     "correct": 63,
+     "misplaced": 5,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.926471,
+    "median_iou": 0.6534,
+    "ledger": {
+     "linked": 63,
+     "lost": 5,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 19,
+      "represented": 19,
+      "truth_represented": 19
+     }
+    }
+   }
+  },
+  "03-simple-table": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/03-simple-table/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/03-simple-table/png/bundle",
+   "seconds": 15.301,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 50,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 49,
+     "misplaced": 1,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.98,
+    "median_iou": 0.6124,
+    "ledger": {
+     "linked": 49,
+     "lost": 1,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 2,
+      "represented": 2,
+      "truth_represented": 2
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "04-multi-model": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/04-multi-model/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/04-multi-model/png/bundle",
+   "seconds": 15.232,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 87,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 83,
+     "misplaced": 4,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.954023,
+    "median_iou": 0.5621,
+    "ledger": {
+     "linked": 83,
+     "lost": 4,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 2,
+      "represented": 2,
+      "truth_represented": 2
+     },
+     "complex_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "05-merged-header": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/05-merged-header/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/05-merged-header/png/bundle",
+   "seconds": 18.029,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.155914,
+    "substitutions": 8,
+    "deletions": 5,
+    "insertions": 0,
+    "truth_words": 76,
+    "teds_mean": 0.985348,
+    "header_path_accuracy": 0.8,
+    "location": {
+     "correct": 64,
+     "misplaced": 7,
+     "unlinked": 5,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.842105,
+    "median_iou": 0.572,
+    "ledger": {
+     "linked": 70,
+     "lost": 6,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 2,
+      "truth_represented": 3
+     },
+     "complex_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "06-units-in-headers": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/06-units-in-headers/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/06-units-in-headers/png/bundle",
+   "seconds": 16.003,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 60,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 60,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.5924,
+    "ledger": {
+     "linked": 60,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 2,
+      "represented": 2,
+      "truth_represented": 2
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "07-footnotes": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/07-footnotes/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/07-footnotes/png/bundle",
+   "seconds": 15.764,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.017903,
+    "substitutions": 5,
+    "deletions": 6,
+    "insertions": 0,
+    "truth_words": 73,
+    "teds_mean": 0.982292,
+    "header_path_accuracy": 0.5,
+    "location": {
+     "correct": 56,
+     "misplaced": 11,
+     "unlinked": 6,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.767123,
+    "median_iou": 0.564,
+    "ledger": {
+     "linked": 58,
+     "lost": 10,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 5,
+      "represented": 4,
+      "truth_represented": 5
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "08-two-column": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/08-two-column/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/08-two-column/png/bundle",
+   "seconds": 16.392,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.027539,
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 1,
+    "truth_words": 106,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 100,
+     "misplaced": 5,
+     "unlinked": 1,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.943396,
+    "median_iou": 0.621,
+    "ledger": {
+     "linked": 101,
+     "lost": 5,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 12,
+      "represented": 11,
+      "truth_represented": 12
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "09-intended-drops": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/09-intended-drops/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/09-intended-drops/png/bundle",
+   "seconds": 16.273,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 57,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 55,
+     "misplaced": 2,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.964912,
+    "median_iou": 0.5836,
+    "ledger": {
+     "linked": 55,
+     "lost": 2,
+     "unlinked": 0,
+     "dropped": {
+      "header": 6,
+      "footer": 5
+     },
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 3,
+      "truth_represented": 3
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "10-torque-speed-plot": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/10-torque-speed-plot/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/10-torque-speed-plot/png/bundle",
+   "seconds": 15.602,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.481928,
+    "substitutions": 2,
+    "deletions": 12,
+    "insertions": 11,
+    "truth_words": 48,
+    "teds_mean": 0.946218,
+    "header_path_accuracy": 0.5,
+    "location": {
+     "correct": 27,
+     "misplaced": 9,
+     "unlinked": 12,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.5625,
+    "median_iou": 0.4944,
+    "ledger": {
+     "linked": 45,
+     "lost": 3,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {
+      "figure": 14
+     },
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 2,
+      "truth_represented": 3
+     },
+     "plot": {
+      "seen": 1,
+      "represented": 0,
+      "truth_represented": 0
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "11-mixed-chinese": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/11-mixed-chinese/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/11-mixed-chinese/png/bundle",
+   "seconds": 17.867,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.003175,
+    "substitutions": 1,
+    "deletions": 1,
+    "insertions": 0,
+    "truth_words": 53,
+    "teds_mean": 0.990909,
+    "header_path_accuracy": 0.833333,
+    "location": {
+     "correct": 40,
+     "misplaced": 12,
+     "unlinked": 1,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.754717,
+    "median_iou": 0.4674,
+    "ledger": {
+     "linked": 49,
+     "lost": 4,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 3,
+      "truth_represented": 3
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "12-full-datasheet": {
+   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/12-full-datasheet/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/12-full-datasheet/png/bundle",
+   "seconds": 16.055,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 91,
+    "teds_mean": 0.996753,
+    "header_path_accuracy": 0.833333,
+    "location": {
+     "correct": 85,
+     "misplaced": 6,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.934066,
+    "median_iou": 0.6061,
+    "ledger": {
+     "linked": 86,
+     "lost": 4,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 10,
+      "represented": 10,
+      "truth_represented": 10
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  }
+ }
+}
