@@ -120,3 +120,11 @@ def test_a_source_word_is_claimed_once():
 def test_escaped_ampersand_keeps_entity_text_literal():
     assert texts(r"Use \&amp; here") == ["Use", "&amp;", "here"]
     assert texts("Use &amp; here") == ["Use", "&", "here"]
+
+
+def test_glued_source_word_is_shared_between_groups():
+    # pdfplumber glued two table cells into one word; each cell's group takes its own half.
+    alignments = align_word_spans(["LRS-350-4.2", "LRS-350-5"], ["LRS-350-4.2LRS-350-5"],
+                                  groups=[([0], [0]), ([1], [0])])
+    assert alignments[0].sources == [(0, 0, 11)] and alignments[0].score == 1.0
+    assert alignments[1].sources == [(0, 11, 20)] and alignments[1].score == 1.0

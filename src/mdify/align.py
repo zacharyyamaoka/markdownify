@@ -277,24 +277,37 @@ def align_word_spans(markdown_texts: list[str], source_texts: list[str], *,
     """Align markdown words to source words (both as lists of their text).
 
     `groups` = [(markdown word indices, source word indices)], one per block whose source words are known: each is
-    aligned on its own, in order, and a source word claimed by one group is not offered to the next. Whatever is
-    still unaligned afterwards is aligned once more against the source words nobody claimed, so a block whose box
+    aligned on its own, in order, and source characters claimed by one group are not offered to the next. Whatever
+    is still unaligned afterwards is aligned once more against the characters nobody claimed, so a block whose box
     missed a word still finds it. Pass `residual=False` to skip that global pass (a converter that adds its own
     per-page leftover groups, so a word never finds a twin on another page).
     """
     results: list[WordAlignment] = [UNALIGNED] * len(markdown_texts)
     markdown_normal = [normalize_with_origin(text) for text in markdown_texts]
     source_normal = [normalize_with_origin(text) for text in source_texts]
-    claimed: set[int] = set()
+    # Claims are per character, not per word. WHY: a source word can hold two markdown words' text (pdfplumber glues
+    # neighbouring table cells, "LRS-350-4.2LRS-350-5"); the cell that takes the first half must leave the second
+    # half to the next cell.
+    claimed: dict[int, set[int]] = {}
+
+    def unclaimed(j: int) -> tuple[str, list[int]]:
+        text, origin = source_normal[j]
+        taken = claimed.get(j)
+        if not taken:
+            return text, origin
+        kept = [(character, at) for character, at in zip(text, origin) if at not in taken]
+        return "".join(character for character, _at in kept), [at for _character, at in kept]
 
     def run(markdown_indices: list[int], source_indices: list[int]) -> None:
         markdown_indices = [i for i in markdown_indices if results[i] is UNALIGNED and markdown_normal[i][0]]
-        source_indices = [j for j in source_indices if j not in claimed and source_normal[j][0]]
+        view = {j: unclaimed(j) for j in source_indices}
+        source_indices = [j for j in source_indices if view[j][0]]
         if not markdown_indices or not source_indices:
             return
-        for i, alignment in _align(markdown_indices, source_indices, markdown_normal, source_normal, min_score):
+        for i, alignment in _align(markdown_indices, source_indices, markdown_normal, view, min_score):
             results[i] = alignment
-            claimed.update(source for source, _start, _end in alignment.sources)
+            for source, start, end in alignment.sources:
+                claimed.setdefault(source, set()).update(range(start, end))
 
     for markdown_indices, source_indices in groups or []:
         run(list(markdown_indices), list(source_indices))
