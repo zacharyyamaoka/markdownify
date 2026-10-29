@@ -375,8 +375,46 @@ def serialize(document, units: list[SourceText], *, fold: Callable[[str], str] |
     if pages is None:
         pages = [{"page": page_no, "width": round(page.size.width, 2), "height": round(page.size.height, 2), "unit": "pt"}
                  for page_no, page in sorted(document.pages.items())]
-    words = _ground_words(markdown, serializer.leaves, units, folded_note, serializer.dropped)
+    words, joins = _ground_words(markdown, serializer.leaves, units, folded_note, serializer.dropped, pages)
+    markdown = _glue(markdown, serializer.blocks, words, joins)
     return Conversion(markdown=markdown, blocks=serializer.blocks, words=words, dropped=serializer.dropped, pages=pages)
+
+
+# Two markdown words that matched touching characters of ONE source word are one word in the source when the gap
+# between those characters is under this fraction of the glyph height.
+_GLUE_GAP = 0.2
+
+
+def _glue(markdown: str, blocks: list[dict], rows: list[dict], joins: list[int]) -> str:
+    """Remove the space docling put inside a source word, and merge the two word rows it split.
+
+    WHY: docling spaces glyphs that sit on another baseline or are kerned apart — "Rated torque 2" for the text
+    layer's "torque²" (a superscript footnote mark), "i ndus t r i a l" for "industrial" — so the markdown said
+    something the source does not, and a table's row label no longer read as the source's label (harness case
+    07-footnotes, header paths 0.25). The text layer decides: no space there, no space here.
+    """
+    for index in sorted(joins, reverse=True):
+        left, right = rows[index], rows[index + 1]
+        start, end = left["range"]["end"], right["range"]["start"]
+        removed = end - start
+        markdown = markdown[:start] + markdown[end:]
+
+        def shift(position: int) -> int:
+            return position - removed if position >= end else min(position, start)
+
+        for block in blocks:
+            block["range"] = {"start": shift(block["range"]["start"]), "end": shift(block["range"]["end"])}
+        for row in rows[index + 1:]:
+            row["range"] = {"start": shift(row["range"]["start"]), "end": shift(row["range"]["end"])}
+        merged = {"range": {"start": left["range"]["start"], "end": right["range"]["end"]},
+                  "grounding": {"page": left["grounding"]["page"],
+                                "box": rounded(union([left["grounding"]["box"], right["grounding"]["box"]]))},
+                  "score": min(left["score"], right["score"])}
+        note = left.get("note") or right.get("note")
+        if note:
+            merged["note"] = note
+        rows[index:index + 2] = [merged]
+    return markdown
 
 
 def _inside(unit: SourceText, grounding: dict) -> bool:
@@ -389,7 +427,8 @@ def _inside(unit: SourceText, grounding: dict) -> bool:
 
 
 def _ground_words(markdown: str, leaves: list[dict], units: list[SourceText], folded_note: str,
-                  dropped: list[dict]) -> list[dict]:
+                  dropped: list[dict], pages: list[dict]) -> tuple[list[dict], list[int]]:
+    """Word rows, and the indices i where word i and word i+1 should be one word (see `_glue`)."""
     words = align.markdown_words(markdown)
     starts = [word.start for word in words]
 
@@ -458,4 +497,20 @@ def _ground_words(markdown: str, leaves: list[dict], units: list[SourceText], fo
                 row["score"] = min(row["score"], 0.99)
                 row["note"] = folded_note
         rows.append(row)
-    return rows
+
+    aspect = {page["page"]: page["width"] / page["height"] for page in pages if page.get("height")}
+    joins = []
+    for index in range(len(words) - 1):
+        left, right = alignments[index], alignments[index + 1]
+        if not (left.sources and right.sources) or markdown[words[index].end:words[index + 1].start].strip(" "):
+            continue
+        (left_unit, _left_start, left_end), (right_unit, right_start, _right_end) = left.sources[-1], right.sources[0]
+        unit = units[left_unit]
+        if left_unit != right_unit or right_start != left_end or not unit.char_boxes or left_end >= len(unit.char_boxes):
+            continue
+        before, after = unit.char_boxes[left_end - 1], unit.char_boxes[left_end]
+        gap = (after[0] - before[2]) * aspect.get(unit.page, 1.0)   # in page-height units, like the glyph height
+        height = max(before[3] - before[1], after[3] - after[1])
+        if gap < _GLUE_GAP * height:
+            joins.append(index)
+    return rows, joins
