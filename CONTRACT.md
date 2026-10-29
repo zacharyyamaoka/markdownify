@@ -121,6 +121,11 @@ For a web page, `grounding` is a range in the source instead of a page and box:
 
 `text_quote` builds the live-page link-out: `<url>#:~:text=Rated%20torque-,20%20Nm` (browsers highlight it natively).
 
+When the `snapshot` capture level is kept (§2.1), each word's grounding also carries its box on the snapshot, measured
+in the browser at capture time: `{"html": {…}, "snapshot": {"page": 1, "box": [x0, y0, x1, y1]}}` (0–1 of the
+snapshot image). WHY: the Source Highlighter can then show an archived page as page + box, like every other source,
+without the maker's live CSS.
+
 ## 4. Invariants (`mdify check <bundle>` re-derives each from the cached bytes; no model, no network)
 
 1. **Faithful:** for every word, the markdown text equals the source text under its grounding (PDF: the text-layer
