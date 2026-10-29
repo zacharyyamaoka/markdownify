@@ -142,6 +142,41 @@ def test_check_catches_a_ledger_that_hides_a_lost_word(tmp_path):
     assert not results_by_name(directory)["accounted"].ok  # the ledger still says "linked"
 
 
+def _table_index(markdown: str, cells: list[tuple[int, int, int, int]], cols: int) -> dict:
+    """A one-table index over `markdown`: (row, col, rowspan, colspan) per cell, ranges left empty at the start."""
+    children = [{"id": f"table_cell-{n + 1}", "type": "table_cell", "range": {"start": 0, "end": 0}, "row": row,
+                 "col": col, "rowspan": rowspan, "colspan": colspan, "kind": "content", "grounding": []}
+                for n, (row, col, rowspan, colspan) in enumerate(cells)]
+    table = {"id": "table-1", "type": "table", "range": {"start": 0, "end": len(markdown)}, "grounding": [],
+             "represented": True, "rows": 1 + max(row for row, *_ in cells), "cols": cols,
+             "children": [child["id"] for child in children]}
+    return {"words": [], "blocks": [table, *children], "pages": []}
+
+
+def test_check_catches_a_table_row_shifted_left():
+    # Mean Well LRS-350's header row as pipeline A wrote it: nothing covers col 1, so every model name sat one
+    # column left of its values.
+    markdown = ("<table>\n<tr><th>MODEL</th><th>A</th><th>B</th></tr>\n"
+                "<tr><th rowspan=\"2\">OUTPUT</th><th>DC VOLTAGE</th><td>5V</td><td>12V</td></tr>\n"
+                "<tr><th>RATED POWER</th><td>300W</td><td>348W</td></tr>\n</table>")
+    index = _table_index(markdown, [(0, 0, 1, 1), (0, 2, 1, 1), (0, 3, 1, 1), (1, 0, 2, 1), (1, 1, 1, 1),
+                                    (1, 2, 1, 1), (1, 3, 1, 1), (2, 1, 1, 1), (2, 2, 1, 1), (2, 3, 1, 1)], cols=4)
+    result = check._well_formed(index, markdown)
+    assert not result.ok
+    assert result.failures == ["table-1 row 0 covers 3 of 4 columns; nothing covers col 3"]
+    fixed = markdown.replace("<th>MODEL</th>", "<th>MODEL</th><td></td>")
+    assert check._well_formed(index, fixed).ok
+
+
+def test_check_catches_a_ragged_gfm_table_and_a_row_that_spills():
+    gfm = "| a | b |\n|---|---|\n| 1 |"
+    result = check._well_formed(_table_index(gfm, [(0, 0, 1, 1), (0, 1, 1, 1), (1, 0, 1, 1)], cols=2), gfm)
+    assert result.failures == ["table-1 row 1 covers 1 of 2 columns; nothing covers col 1"]
+    spill = "<table>\n<tr><td colspan=\"2\">a</td><td>b</td></tr>\n</table>"
+    result = check._well_formed(_table_index(spill, [(0, 0, 1, 2), (0, 1, 1, 1)], cols=2), spill)
+    assert result.failures[-1] == "table-1 row 0 covers 3 of 2 columns; spills into col 2"
+
+
 # --- escaping ---------------------------------------------------------------------------------------------------
 @pytest.mark.parametrize("text", ["5*3 = 15", "snake_case _x_", "a|b", "# not a heading", "1. not a list",
                                   "- not a bullet", "<b>not a tag</b>", "&amp; literal", "[x](y)", "back\\slash",

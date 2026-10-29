@@ -10,7 +10,8 @@ What it writes:
 - headings (`#` for the title, `##`… for section headers by level), paragraphs, captions, footnotes, list items
   (nested by their list groups), fenced code;
 - tables as GFM pipe tables — or, when a cell spans rows or columns (GFM cannot hold that), as a raw HTML `<table>`
-  with rowspan/colspan (CONTRACT §2); every cell is a `table_cell` block with row/col/span and its header `kind`;
+  with rowspan/colspan on a rectangular grid (`mdify.tables`; CONTRACT §2); every cell is a `table_cell` block with
+  docling's own row/col/span and its header `kind`;
 - pictures as `figure` blocks with `represented: false` and their box, and no markdown (CONTRACT §3.1): the words
   inside them are counted as flagged, not lost;
 - page headers and footers (docling's furniture layer) are left out and listed in `dropped`.
@@ -33,6 +34,7 @@ from docling_core.types.doc import (CodeItem, ContentLayer, DocItemLabel, GroupL
 
 from . import align
 from .converters import Conversion
+from .tables import GridCell, html_table
 
 Box = tuple[float, float, float, float]
 
@@ -348,21 +350,15 @@ class _Serializer:
         return blocks
 
     def html_table(self, cells, data, page_no, has_row_headers) -> list[dict]:
-        blocks = []
-        self.writer.write("<table>")
-        for row in range(data.num_rows):
-            self.writer.write("\n<tr>")
-            for cell in (cell for cell in cells if cell.start_row_offset_idx == row):
-                tag = "th" if cell.column_header or cell.row_header else "td"
-                attributes = (f' rowspan="{cell.row_span}"' if cell.row_span > 1 else "") + \
-                             (f' colspan="{cell.col_span}"' if cell.col_span > 1 else "")
-                self.writer.write(f"<{tag}{attributes}>")
-                start, end = self.writer.write(escape_html_text(squash(self.fold(cell.text or ""))))
-                self.writer.write(f"</{tag}>")
-                blocks.append(self.cell_block(cell, page_no, has_row_headers, start, end))
-            self.writer.write("</tr>")
-        self.writer.write("\n</table>")
-        return blocks
+        # WHY mdify.tables: docling's cells are not always a grid (a slot nothing covers, a span over another
+        # cell); written row by row they shifted LRS-350's model names one column off their values.
+        grid_cells = [GridCell(cell.start_row_offset_idx, cell.start_col_offset_idx, cell.row_span, cell.col_span,
+                               bool(cell.column_header or cell.row_header),
+                               escape_html_text(squash(self.fold(cell.text or "")))) for cell in cells]
+        markup, ranges = html_table(grid_cells, data.num_rows, data.num_cols)
+        offset, _ = self.writer.write(markup)
+        return [self.cell_block(cell, page_no, has_row_headers, offset + start, offset + end)
+                for cell, (start, end) in zip(cells, ranges)]
 
 
 # --- serialise and align ----------------------------------------------------------------------------------------
