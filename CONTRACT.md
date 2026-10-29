@@ -227,7 +227,8 @@ means reject it. Still though you can keep the base thing there."
 - **Human rows** (`add`) are human-entered: `grounding` may be a Location the person drew on the source, or `null`
   ("no source cited") — never a borrowed AI grounding.
 - **Products:** one datasheet can serve many products. `assign` maps value ids (`"*"` = all) to product ids; a value
-  that differs per product (a column per model) is assigned to that product only.
+  that differs per product (a column per model) is assigned to that product only. `unassign` (same shape) removes
+  that mapping again — both stay in the log.
 - Ops are applied in order; the last op on a value wins; nothing is deleted.
 
 ## 8. RobotParts seam
