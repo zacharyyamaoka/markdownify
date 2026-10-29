@@ -1,0 +1,16 @@
+<script>
+const out = [];
+for (const el of document.querySelectorAll('span[data-pos]')) {
+  if (el.querySelector('span[data-pos]')) continue;           // leaf spans only
+  const pos = el.getAttribute('data-pos').split('@')[1];
+  const tn = el.firstChild; if (!tn || tn.nodeType !== 3) continue;
+  for (let i = 0; i < tn.length; i++) {
+    const r = document.createRange(); r.setStart(tn, i); r.setEnd(tn, i + 1);
+    const rects = r.getClientRects(); if (!rects.length) continue;
+    const b = rects[0];
+    out.push([pos, i, tn.data[i], +b.left.toFixed(2), +b.top.toFixed(2), +b.right.toFixed(2), +b.bottom.toFixed(2)]);
+  }
+}
+const s = document.createElement('script'); s.type = 'application/json'; s.id = 'boxes';
+s.textContent = JSON.stringify(out); document.body.appendChild(s);
+</script></body></html>
