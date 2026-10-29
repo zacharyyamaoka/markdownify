@@ -375,9 +375,22 @@ def serialize(document, units: list[SourceText], *, fold: Callable[[str], str] |
     if pages is None:
         pages = [{"page": page_no, "width": round(page.size.width, 2), "height": round(page.size.height, 2), "unit": "pt"}
                  for page_no, page in sorted(document.pages.items())]
+    _cover_dropped_words(serializer.dropped, units)
     words, joins = _ground_words(markdown, serializer.leaves, units, folded_note, serializer.dropped, pages)
     markdown = _glue(markdown, serializer.blocks, words, joins)
     return Conversion(markdown=markdown, blocks=serializer.blocks, words=words, dropped=serializer.dropped, pages=pages)
+
+
+def _cover_dropped_words(dropped: list[dict], units: list[SourceText]) -> None:
+    """Grow each dropped region (a page header or footer) to the full boxes of the source words inside it.
+
+    WHY: docling's furniture box hugs the glyphs, while a word's box spans its font's ascent and descent; a header
+    word whose box only half overlaps the region would read as lost rather than dropped on purpose."""
+    for region in dropped:
+        grounding = region["grounding"]
+        inside = [unit.box for unit in units if _inside(unit, grounding)]
+        if inside:
+            grounding["box"] = rounded(union([tuple(grounding["box"]), *inside]))
 
 
 # Two markdown words that matched touching characters of ONE source word are one word in the source when the gap

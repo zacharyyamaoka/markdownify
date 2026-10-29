@@ -159,3 +159,10 @@ def test_brackets_of_a_multi_line_link_are_syntax():
 def test_footnote_markers_are_syntax():
     assert texts("Peak torque[^1] is 60 Nm.\n\n[^1]: Measured at 25 °C.\n") == \
         ["Peak", "torque", "is", "60", "Nm.", "Measured", "at", "25", "°C."]
+
+
+def test_a_word_split_over_two_baselines_joins_whole_source_words_out_of_order():
+    # A subscript: the text layer reads "V", "rises", "IN" (the lowered "IN" sorts after the line); the markdown
+    # reads "VIN". Whole words joined at their boundaries are the source's text, wherever they sort.
+    alignment = align_word_spans(["VIN", "rises"], ["V", "rises", "IN"])[0]
+    assert alignment.score == 1.0 and sorted(source for source, _s, _e in alignment.sources) == [0, 2]

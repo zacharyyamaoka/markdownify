@@ -277,6 +277,7 @@ class WordAlignment:
 
 
 UNALIGNED = WordAlignment([], 0.0)
+_ROUNDS = 3
 # WHY a cap: rapidfuzz's character alignment keeps an N×M/64 word bit matrix for the traceback; past this many
 # cells a stretch is matched word by word instead (exact text only).
 _MAX_CHARACTER_CELLS = 400_000_000
@@ -310,15 +311,22 @@ def align_word_spans(markdown_texts: list[str], source_texts: list[str], *,
         return "".join(character for character, _at in kept), [at for _character, at in kept]
 
     def run(markdown_indices: list[int], source_indices: list[int]) -> None:
-        markdown_indices = [i for i in markdown_indices if results[i] is UNALIGNED and markdown_normal[i][0]]
-        view = {j: unclaimed(j) for j in source_indices}
-        source_indices = [j for j in source_indices if view[j][0]]
-        if not markdown_indices or not source_indices:
-            return
-        for i, alignment in _align(markdown_indices, source_indices, markdown_normal, view, min_score):
-            results[i] = alignment
-            for source, start, end in alignment.sources:
-                claimed.setdefault(source, set()).update(range(start, end))
+        # WHY rounds: a first pass in order leaves out-of-order pieces behind (a subscript the text layer sorts
+        # after its line); a second pass over just the leftovers on both sides finds them.
+        for _round in range(_ROUNDS):
+            todo = [i for i in markdown_indices if results[i] is UNALIGNED and markdown_normal[i][0]]
+            view = {j: unclaimed(j) for j in source_indices}
+            offered = [j for j in source_indices if view[j][0]]
+            if not todo or not offered:
+                return
+            progressed = False
+            for i, alignment in _align(todo, offered, markdown_normal, view, min_score):
+                results[i] = alignment
+                progressed = True
+                for source, start, end in alignment.sources:
+                    claimed.setdefault(source, set()).update(range(start, end))
+            if not progressed:
+                return
 
     for markdown_indices, source_indices in groups or []:
         run(list(markdown_indices), list(source_indices))
@@ -423,12 +431,11 @@ def _align_stretch(stretch, markdown_indices, source_indices, markdown_normal, s
 
 
 def _contiguous(spans: dict[int, list[int]], stretch_source: list[int], source_normal) -> bool:
-    """True when the covered characters run unbroken across neighbouring source words: the first word to its end,
-    every middle word whole, the last word from its start — a word the converter joined ("N·m" from "N", "·", "m")."""
-    position = {j: n for n, j in enumerate(stretch_source)}
-    ordered = sorted(spans, key=position.__getitem__)
-    if [position[j] for j in ordered] != list(range(position[ordered[0]], position[ordered[0]] + len(ordered))):
-        return False
+    """True when the covered characters are source words joined at their word boundaries, in the markdown word's
+    order: the first word to its end, every middle word whole, the last word from its start ("N·m" from "N", "·",
+    "m"; "VIN" from "V" and a subscript "IN"). WHY not also adjacent in the source's order: a text layer sorts a
+    subscript or superscript after its line, so the halves of one printed word need not be neighbours there."""
+    ordered = list(spans)  # dict order = the order the markdown word's characters met them
     for n, j in enumerate(ordered):
         ks = sorted(spans[j])
         last = len(source_normal[j][0]) - 1
