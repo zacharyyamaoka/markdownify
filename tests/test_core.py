@@ -231,3 +231,16 @@ def test_reader_is_passed_only_to_a_converter_that_has_it(tmp_path, monkeypatch)
                      log=messages.append)
     assert calls == [True, "plain"]
     assert messages == ["mdify: --reader applies to web pages only; ignored for application/pdf"]
+
+
+def test_check_refuses_a_source_only_directory_cleanly(tmp_path, capsys):
+    from mdify import cli
+
+    directory = tmp_path / "source-only"
+    directory.mkdir()
+    write_pdf(directory / "source.pdf")
+    write_json(directory / "source.json", {"sha256": "0" * 64, "media_type": "application/pdf", "retrievals": []})
+    assert cli.main(["check", str(directory)]) == 1
+    error = capsys.readouterr().err
+    assert "not a complete bundle: missing document.md, index.json, ledger.json (source only)" in error
+    assert "Traceback" not in error

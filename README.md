@@ -10,3 +10,9 @@ that link.
 
 Layout: `src/mdify/` (converters + core), `harness/` (the round-trip ruler: markdown → render → convert → score),
 `reports/` (review pages).
+
+Where bundles go: `mdify <path-or-url>` writes the whole bundle to `~/.cache/markdownify/bundles/<sha256>/`
+(or `$MARKDOWNIFY_CACHE/bundles/…`). With `--out DIR` the bundle goes to DIR, and the cache keeps only the source
+(`source.<ext>` + `source.json`). WHY: the cache's first job is to keep the exact bytes a citation points at after the
+worktree that converted them is gone, while a bundle written to `--out` (a harness run, an experiment) is the
+caller's. `mdify check` refuses a source-only directory ("not a complete bundle … (source only)").

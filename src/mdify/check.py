@@ -24,6 +24,13 @@ from .cache import sha256_file
 _SHOWN = 10  # failures quoted per invariant; the count is always complete
 
 
+BUNDLE_FILES = ("source.json", "document.md", "index.json", "ledger.json")
+
+
+class IncompleteBundle(Exception):
+    """The directory is not a whole bundle (a cache directory holding only the source, after an `--out` run)."""
+
+
 @dataclasses.dataclass
 class Result:
     number: int
@@ -34,6 +41,14 @@ class Result:
 
 
 def check(directory: pathlib.Path) -> list[Result]:
+    directory = pathlib.Path(directory)
+    if not directory.is_dir():
+        raise IncompleteBundle(f"{directory} is not a directory")
+    missing = [name for name in BUNDLE_FILES if not (directory / name).is_file()]
+    if missing:
+        only_source = "source.json" not in missing and len(missing) == len(BUNDLE_FILES) - 1
+        raise IncompleteBundle(f"not a complete bundle: missing {', '.join(missing)}"
+                               + (" (source only)" if only_source else ""))
     record, index, ledger, markdown, source = bundle.load(directory)
     return [_faithful(index, ledger, markdown, source), _traceable(index, markdown), _accounted(index, ledger, source),
             _well_formed(index, markdown), _pinned(directory, record, index, source)]

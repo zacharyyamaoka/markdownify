@@ -61,7 +61,12 @@ def _check(argv: list[str]) -> int:
 
     status = 0
     for directory in arguments.bundles:
-        results = check.check(directory)
+        try:
+            results = check.check(directory)
+        except check.IncompleteBundle as error:
+            print(f"mdify check {display_path(directory)}: {error}", file=sys.stderr)
+            status = 1
+            continue
         print(check.report(display_path(directory), results))
         if not all(result.ok for result in results):
             status = 1
