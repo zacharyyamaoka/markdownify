@@ -189,8 +189,9 @@ def test_block_ids_are_unique_and_ranges_nest(conversion):
             assert block["range"]["start"] <= inner["start"] <= inner["end"] <= block["range"]["end"]
 
 
-def test_markdown_is_defuddles_own(page_source, conversion):
-    """The stamped ids must not change what Defuddle writes: its markdown for the unstamped page is ours."""
+def test_reader_mode_markdown_is_defuddles_own(page_source):
+    """The stamped ids must not change what Defuddle writes: in reader mode, its markdown for the unstamped page
+    is ours."""
     script = """
 import { Defuddle } from 'defuddle/node';
 import { createRequire } from 'node:module';
@@ -207,7 +208,85 @@ process.stdout.write(result.content);
     payload = json.dumps({"html": mdify_html.decoded_html(page_source), "url": URL}).encode()
     run = subprocess.run([mdify_html.NODE, "--input-type=module", "-e", script], input=payload, capture_output=True,
                          cwd=mdify_html.TOOL.parent, check=True)
-    assert run.stdout.decode("utf-8") == conversion.markdown
+    assert run.stdout.decode("utf-8") == mdify_html.convert(page_source, reader=True).markdown
+
+
+# --- conservative content mode (the default) ----------------------------------------------------------------------
+DATASHEET_PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>AK10-9 – Maker</title></head><body>
+<div class="mobile-drawer"><ul><li><a href="/p/ak10-9">AK10-9 KV60</a></li><li><a href="/p/ake90-8">AKE90-8 KV35</a></li>
+<li><a href="/p/ri50">RI50 KV100</a></li></ul></div>
+<header><nav><ul><li><a href="/p/ak10-9">AK10-9 KV60</a></li><li><a href="/p/ake90-8">AKE90-8 KV35</a></li>
+<li><a href="/p/ri50">RI50 KV100</a></li></ul></nav></header>
+<div class="product">
+<article><header><h1>AK10-9 Robotic Actuator</h1></header><p>A planetary actuator for legged robots, with an
+integrated driver and dual encoders, sold as a module ready to bolt into a joint.</p></article>
+<div class="tabs"><span>Description</span><span>Specification</span></div>
+<div class="tabcon" id="b_news11"><div class="tableTitle">Specification</div>
+<table><tr><td>Rated torque</td><td>18 N·m</td></tr><tr><td>Peak torque</td><td>48 N·m</td></tr></table></div>
+<div class="features"><ul><li><div>Dual absolute encoders</div></li><li><div>CAN 2.0B and UART</div></li></ul></div>
+<div class="desc wow fadeInUp" style="visibility: hidden">额定扭矩：3Nm 峰值扭矩：7Nm</div>
+</div>
+<aside>Related products and offers</aside>
+<footer><p>Copyright 2026 Maker</p></footer>
+</body></html>"""
+
+
+@pytest.fixture(scope="module")
+def datasheet_source(tmp_path_factory) -> Source:
+    path = tmp_path_factory.mktemp("datasheet") / "source.html"
+    path.write_text(DATASHEET_PAGE, encoding="utf-8")
+    return Source(path, hashlib.sha256(DATASHEET_PAGE.encode()).hexdigest(), "text/html", URL)
+
+
+def _drop_reason_at(conversion, decoded, text):
+    at = decoded.index(text)
+    return [drop["reason"] for drop in conversion.dropped
+            if drop["grounding"]["html"]["source_range"]["start"] <= at < drop["grounding"]["html"]["source_range"]["end"]]
+
+
+def test_default_mode_keeps_spec_tabs_lists_and_revealed_text(datasheet_source):
+    conversion = mdify_html.convert(datasheet_source)
+    for kept in ("AK10-9 Robotic Actuator", "Specification", "| Rated torque | 18 N·m |", "Dual absolute encoders",
+                 "CAN 2.0B and UART", "额定扭矩：3Nm 峰值扭矩：7Nm", "planetary actuator"):
+        assert kept in conversion.markdown, kept
+    assert all(word["grounding"] is not None for word in conversion.words)
+
+
+def test_default_mode_drops_only_with_a_known_reason(datasheet_source):
+    conversion = mdify_html.convert(datasheet_source)
+    decoded = mdify_html.decoded_html(datasheet_source)
+    assert "AKE90-8" not in conversion.markdown and "Copyright" not in conversion.markdown
+    assert "Related products" not in conversion.markdown
+    assert _drop_reason_at(conversion, decoded, "<header><nav>") == ["header"]
+    assert _drop_reason_at(conversion, decoded, "<aside>") == ["boilerplate"]
+    assert _drop_reason_at(conversion, decoded, "<footer>") == ["footer"]
+    # The mobile drawer repeats the menu: a second copy, dropped as such.
+    assert _drop_reason_at(conversion, decoded, '<div class="mobile-drawer">') == ["duplicate"]
+    assert all(drop["reason"] in ("navigation", "header", "footer", "boilerplate", "duplicate") for drop in conversion.dropped)
+
+
+def test_default_mode_keeps_the_title_heading_and_footnotes_as_written(tmp_path):
+    """Defuddle's standardisation deletes a heading equal to the page title and renumbers footnote-like notes;
+    on a datasheet the heading is the product name and a renumbered note puts the wrong condition on a value."""
+    page = ("<html><head><title>KM80-9 Performance</title></head><body><main><h1>KM80-9 Performance</h1>"
+            "<p>The peak torque<sup>1</sup> is available for 2 s at most; the continuous rating<sup>2</sup> holds "
+            "indefinitely, as long as the housing is cooled the way the notes below describe it.</p>"
+            "<p><sup>1</sup> Measured at 25 °C ambient for 2 s, starting from a cold winding.</p>"
+            "<p><sup>2</sup> Continuous, with the housing on a 300 × 300 mm aluminium plate.</p></main></body></html>")
+    path = tmp_path / "source.html"
+    path.write_text(page, encoding="utf-8")
+    source = Source(path, hashlib.sha256(page.encode()).hexdigest(), "text/html", URL)
+    conversion = mdify_html.convert(source)
+    assert conversion.markdown.startswith("## KM80-9 Performance")
+    assert "[^" not in conversion.markdown
+    assert "<sup>1</sup> Measured at 25 °C" in conversion.markdown
+    assert all(word["grounding"] is not None for word in conversion.words)
+
+
+def test_reader_mode_is_defuddles_judgement(datasheet_source):
+    reader = mdify_html.convert(datasheet_source, reader=True)
+    default = mdify_html.convert(datasheet_source)
+    assert len(reader.words) < len(default.words)
 
 
 # --- the real set: robotparts' cached pages ----------------------------------------------------------------------

@@ -4,8 +4,12 @@
  * page already decoded to a string by `mdify.html`, so both sides count offsets in the same string — and writes one
  * JSON object to stdout.
  *
- *   node mdify_html.mjs convert     the markdown, its blocks, the inventory (+ alt and svg words) and what
- *                                   Defuddle left out
+ *   node mdify_html.mjs convert [--reader]   the markdown, its blocks, the inventory (+ alt and svg tooltip
+ *                                            words) and what was left out, with why
+ *
+ * Default (conservative) mode: Defuddle writes and standardises the markdown of the whole <body>; only removals
+ * with a known reason are made (`conservativeRemovals`). `--reader`: Defuddle also picks the content, as in
+ * Obsidian's reading view. WHY the default: see `convert`.
  *   node mdify_html.mjs inventory   the inventory alone; never loads Defuddle
  *
  * WHY two libraries: Defuddle (kepano, MIT) is the best open judge of "what on this page is content" and writes
@@ -412,7 +416,94 @@ function tableCells(table, original) {
   return cells;
 }
 
-async function convert(page, url) {
+// --- conservative content mode (the default) ---------------------------------------------------------------------
+// Landmarks that are page chrome by definition (HTML-AAM): <nav>, <aside>, and <header>/<footer> when they belong
+// to the page rather than to an article or section (an <article>'s <header> holds its title).
+const SECTIONING = new Set(['article', 'aside', 'main', 'nav', 'section']);
+const CHROME_ROLES = { navigation: 'navigation', menu: 'navigation', menubar: 'navigation', banner: 'header',
+  contentinfo: 'footer', complementary: 'boilerplate' };
+const DUPLICATE_MIN_WORDS = 20;      // a repeated block this long is a second rendering, not a coincidence
+const MENU_COPY_MIN_WORDS = 3;
+
+function squashText(element) {
+  return (element.textContent || '').split(/\s+/).filter(Boolean).join(' ');
+}
+
+function linkDensity(element) {
+  const total = squashText(element).length;
+  if (!total) return 0;
+  let linked = 0;
+  for (const link of element.querySelectorAll('a[href]')) linked += squashText(link).length;
+  return linked / total;
+}
+
+function chromeReason(element) {
+  const tag = element.localName;
+  const role = (element.getAttribute('role') || '').trim().toLowerCase();
+  if (CHROME_ROLES[role]) return { reason: CHROME_ROLES[role], detail: role === 'complementary' ? 'aside' : `role=${role}` };
+  if (tag === 'nav' || tag === 'menu') return { reason: 'navigation', detail: `<${tag}>` };
+  if (tag === 'aside') return { reason: 'boilerplate', detail: 'aside' };
+  if (tag === 'header' || tag === 'footer') {
+    for (let up = element.parentElement; up; up = up.parentElement) if (SECTIONING.has(up.localName)) return null;
+    return { reason: tag, detail: `<${tag}>` };
+  }
+  return null;
+}
+
+function conservativeRemovals(page) {
+  /** What the default mode leaves out, decided here and not by Defuddle: element number -> {reason, detail}.
+   * Only removals with a known reason: page landmarks (above), elements hidden in markup (`hidden`, inline
+   * display:none — the inventory's own rule, so their words were never source words), and second copies (a
+   * menu repeated in a mobile drawer, a block rendered twice). Script/style/template/noscript are Defuddle's
+   * to drop: they hold no visible words. Everything else is kept — tab panels and short-item lists included. */
+  const removals = new Map();
+  const body = page.document.body || page.document.documentElement;
+  const visit = (element, decide) => {
+    const stack = [element];
+    while (stack.length) {
+      const current = stack.pop();
+      if (removals.has(page.number.get(current))) continue;
+      if (decide(current)) continue;
+      for (let index = current.children.length - 1; index >= 0; index--) stack.push(current.children[index]);
+    }
+  };
+  visit(body, (element) => {
+    const number = page.number.get(element);
+    if (element !== body && page.hidden(element) && !INVISIBLE_TAGS.has(element.localName)) {
+      removals.set(number, { reason: null, detail: 'hidden in markup', silent: true });
+      return true;
+    }
+    const chrome = element === body ? null : chromeReason(element);
+    if (chrome) { removals.set(number, chrome); return true; }
+    return false;
+  });
+  // Copies: of the chrome just found (link-dense, every word inside a chrome region's text), or of a long block
+  // already seen earlier in the page.
+  const chromeText = ' ' + [...removals.entries()].filter(([, removal]) => !removal.silent)
+    .map(([number]) => squashText(page.elements[number])).join(' \n ') + ' ';
+  const seen = new Map();
+  visit(body, (element) => {
+    if (element === body || TABLE_PARTS.has(element.localName) || INVISIBLE_TAGS.has(element.localName)) return false;
+    const text = squashText(element);
+    const words = text ? text.split(' ').length : 0;
+    if (words >= MENU_COPY_MIN_WORDS && chromeText.includes(` ${text} `) && linkDensity(element) >= 0.5) {
+      removals.set(page.number.get(element), { reason: 'duplicate', detail: 'copy of the page navigation' });
+      return true;
+    }
+    if (words >= DUPLICATE_MIN_WORDS) {
+      const first = seen.get(text);
+      if (first && !first.contains(element)) {
+        removals.set(page.number.get(element), { reason: 'duplicate', detail: `copy of ${page.xpaths.get(first)}` });
+        return true;
+      }
+      if (!first) seen.set(text, element);
+    }
+    return false;
+  });
+  return removals;
+}
+
+async function convert(page, url, reader) {
   const defuddleNode = fileURLToPath(import.meta.resolve('defuddle/node'));
   const defuddleDist = path.dirname(defuddleNode);
   // Same module instances Defuddle itself loads, so the allow-list it reads is the one patched here.
@@ -433,7 +524,37 @@ async function convert(page, url) {
   // were: pandoc's <tr class="header"> header row is removed as a page header, and with it every column header a
   // value's meaning depends on. Their classes only style the table, so they go before Defuddle looks.
   for (const part of stampedDocument.querySelectorAll('table, thead, tbody, tfoot, tr, th, td')) part.removeAttribute('class');
-  const result = await Defuddle(stampedDocument, url || 'about:blank', { useAsync: false });
+  // WHY two modes (coordinator, 2026-10-29, from this converter's ledger on robotparts' 46 cached maker pages):
+  // Defuddle is built for reading mode. Left to pick the content it kept 0.51 of the visible words — it took
+  // CubeMars' description <article> and lost the Specification tab, and its content patterns deleted short spec
+  // lists and mdmbot's rated/peak torque line. Losing a spec table is data loss; keeping some boilerplate is cheap.
+  // So by default Defuddle only writes the markdown and standardises it: the content root is <body>, its selector,
+  // scoring, pattern and hidden-style removals are off, and `conservativeRemovals` drops only what has a known
+  // reason. WHY its hidden check off too: it removes visibility:hidden and opacity:0, which scroll-reveal scripts
+  // ship real content as. `--reader` gives Defuddle back its own judgement.
+  const removals = reader ? new Map() : conservativeRemovals(page);
+  if (removals.size) {
+    const stamped = new Map();
+    for (const element of stampedDocument.querySelectorAll(`[${STAMP}]`)) stamped.set(Number(element.getAttribute(STAMP)), element);
+    for (const number of removals.keys()) stamped.get(number)?.remove();
+  }
+  if (!reader) {
+    // WHY: Defuddle's standardisation deletes the first heading when it repeats the page title, because its reading
+    // view prints the title above the article. This markdown has no title line, so that heading is the product's
+    // name (the harness lost every case's <h1> to it). Defuddle reads the title once, through this extractor;
+    // handing it an empty one leaves the heading in place.
+    const { MetadataExtractor } = require(path.join(defuddleDist, 'metadata.js'));
+    const extract = MetadataExtractor.extract.bind(MetadataExtractor);
+    MetadataExtractor.extract = (...args) => ({ ...extract(...args), title: '' });
+    // WHY: Defuddle's footnote standardisation guesses which paragraphs are footnote bodies from their position.
+    // On a datasheet's "<sup>1</sup> Measured at 25 °C…" notes it renumbered them and tied the body's [^1] to the
+    // second note (harness case 07: the wrong test condition on peak torque), dropping the labels. A wrong
+    // condition on a value is worse than a footnote left as written, so the notes stay as the page wrote them.
+    require(path.join(defuddleDist, 'elements', 'footnotes.js')).standardizeFootnotes = () => {};
+  }
+  const options = reader ? { useAsync: false } : { useAsync: false, contentSelector: 'body', removeExactSelectors: false,
+    removePartialSelectors: false, removeLowScoring: false, removeContentPatterns: false, removeHiddenElements: false };
+  const result = await Defuddle(stampedDocument, url || 'about:blank', options);
 
   const host = new JSDOM('', { virtualConsole: new VirtualConsole() }).window.document;
   const content = host.createElement('div');
@@ -531,16 +652,31 @@ async function convert(page, url) {
     }
     return root;
   };
+  // Each removed word belongs to the removal that decided it: the conservative pass's element when one holds it
+  // (its reason is known), else the topmost removed subtree — Defuddle's own removal, whose reason is read from
+  // markup in reader mode and is unknown (null: the words stay lost) in the default mode.
+  const decidedBy = (number, root) => {
+    for (let element = page.elements[number]; element; element = element.parentElement) {
+      const index = page.number.get(element);
+      if (removals.has(index)) return index;
+      if (index === root) break;
+    }
+    return null;
+  };
   const droppedWords = new Map();
   for (const word of inventory) {
     const root = removedRoot(word.element);
-    if (root !== null) droppedWords.set(root, (droppedWords.get(root) || 0) + 1);
+    if (root === null) continue;
+    const region = decidedBy(word.element, root) ?? root;
+    droppedWords.set(region, (droppedWords.get(region) || 0) + 1);
   }
   const dropped = [];
-  for (const [root, words] of [...droppedWords].sort((a, b) => a[0] - b[0])) {
-    const element = page.elements[root];
-    dropped.push({ source_range: page.range(page.span(element)), xpath: page.xpaths.get(element), words,
-      ...page.dropReason(element) });
+  for (const [region, words] of [...droppedWords].sort((a, b) => a[0] - b[0])) {
+    const element = page.elements[region];
+    const removal = removals.get(region);
+    const why = removal ? { reason: removal.reason, detail: removal.detail }
+      : reader ? page.dropReason(element) : { reason: null, detail: `removed by Defuddle (<${element.localName}>)` };
+    dropped.push({ source_range: page.range(page.span(element)), xpath: page.xpaths.get(element), words, ...why });
   }
 
   const outBlocks = blocks.map((block) => {
@@ -569,7 +705,7 @@ async function convert(page, url) {
 async function main() {
   const mode = process.argv[2];
   if (mode !== 'convert' && mode !== 'inventory') {
-    process.stderr.write('usage: node mdify_html.mjs convert|inventory < {"html": "...", "url": "..."}\n');
+    process.stderr.write('usage: node mdify_html.mjs convert [--reader]|inventory < {"html": "...", "url": "..."}\n');
     process.exit(2);
   }
   const chunks = [];
@@ -579,7 +715,7 @@ async function main() {
   // A local file has no URL; a malformed one is treated the same (jsdom refuses it, and links stay relative).
   const url = URL.canParse(input.url || '') ? input.url : '';
   const page = new Page(html, url);
-  const output = mode === 'convert' ? await convert(page, url) : { inventory: page.inventory(), mapping_fallbacks: page.mappingFallbacks };
+  const output = mode === 'convert' ? await convert(page, url, process.argv.includes('--reader')) : { inventory: page.inventory(), mapping_fallbacks: page.mappingFallbacks };
   process.stdout.write(JSON.stringify(output));
 }
 

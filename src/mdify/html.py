@@ -10,11 +10,16 @@ The work is split at the language line:
   WHY block by block: CubeMars prints its whole catalogue in its menu, so "AK70-10" occurs many times on the page;
   matched against the whole page a spec-table cell could be pinned to a menu entry.
 
-What counts as dropped: only a removed subtree whose markup says why — `<nav>`/`<menu>` or a navigation role or
-class (navigation), `<header>`/banner (header), `<footer>`/contentinfo (footer), `<aside>` or a sidebar
-(boilerplate, detail "aside"). WHY not every removal: Defuddle also removes real content when it picks too narrow a
-main element (a CubeMars product page loses its whole specification tab to the description `<article>`); calling
-that "boilerplate" would hide exactly the loss the ledger exists to show. Those words stay `lost`.
+Content mode. By default Defuddle only writes and standardises the markdown of the whole <body>; what is left out
+is decided in `html_tool` by known reasons alone: page landmarks — <nav>/<menu> or a navigation/menu role
+(navigation), the page's <header>/banner (header), its <footer>/contentinfo (footer), <aside>/complementary
+(boilerplate, detail "aside") — elements hidden in markup, and second copies (a menu repeated in a mobile drawer, a
+block rendered twice: duplicate). Everything else is kept, tab panels and short lists included.
+WHY (coordinator, 2026-10-29, from this converter's own ledger on robotparts' 46 cached maker pages): left to pick
+the content, Defuddle kept 0.51 of the visible words — CubeMars lost its whole Specification tab to the description
+<article>, mdmbot its rated/peak torque line. Losing a spec table is data loss; keeping a bit of boilerplate is
+cheap. `convert(source, reader=True)` (`mdify_html.mjs convert --reader`) is Defuddle's own reading mode; there a
+removal counts as dropped only when its markup says why, and every other removed word stays `lost`.
 
 The inventory (`inventory`) is the page's visible text nodes, read by jsdom alone — `mdify_html.mjs inventory`
 never loads Defuddle — so the ledger is not graded by the code it grades. "Visible" is markup-only for v0: no
@@ -89,9 +94,10 @@ def decoded_html(source: Source) -> str:
     return _decoded(str(source.path), source.sha256)
 
 
-def _run(mode: str, source: Source) -> dict:
+def _run(mode: str, source: Source, *flags: str) -> dict:
     payload = json.dumps({"html": decoded_html(source), "url": source.url or ""}).encode("utf-8")
-    run = subprocess.run([NODE, str(TOOL), mode], input=payload, capture_output=True, check=False, cwd=TOOL.parent)
+    run = subprocess.run([NODE, str(TOOL), mode, *flags], input=payload, capture_output=True, check=False,
+                         cwd=TOOL.parent)
     if run.returncode != 0:
         raise RuntimeError(f"html_tool {mode} failed ({run.returncode}): {run.stderr.decode('utf-8', 'replace')[-2000:]}")
     return json.loads(run.stdout)
@@ -230,8 +236,10 @@ def _block_records(output: dict) -> list[dict]:
     return placed
 
 
-def convert(source: Source) -> Conversion:
-    output = _run("convert", source)
+def convert(source: Source, *, reader: bool = False) -> Conversion:
+    """`reader=True` is Defuddle's reading mode (it picks the content); the default keeps everything that has no
+    known reason to go — see the module docstring."""
+    output = _run("convert", source, *(["--reader"] if reader else []))
     markdown = output["reference_markdown"]
     decoded = decoded_html(source)
     # Alignment sees the visible words plus image alt text (Defuddle writes alt as a caption); only the visible
@@ -239,9 +247,12 @@ def convert(source: Source) -> Conversion:
     page = _Page(decoded, output["inventory"] + output["extra_words"])
     source_words = page.words
 
-    # Source words Defuddle did not remove are the alignment candidates; a removed word can still be found by the
-    # residual pass, but never ahead of a kept one.
-    removed = sorted((region["source_range"]["start"], region["source_range"]["end"]) for region in output["dropped"])
+    # Source words not left out are the alignment candidates; a left-out word can still be found by the residual
+    # pass, but never ahead of a kept one. In the default mode only a removal with a reason left anything out: a
+    # subtree with no surviving id and no reason is one Defuddle's standardisation rebuilt (a <div> turned <p>, a
+    # <span> unwrapped), and its words are in the markdown. In reader mode such a subtree is Defuddle's own cut.
+    removed = sorted((region["source_range"]["start"], region["source_range"]["end"]) for region in output["dropped"]
+                     if reader or region["reason"] is not None)
     removed_starts = [start for start, _ in removed]
 
     def is_removed(word: dict) -> bool:
