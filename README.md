@@ -17,6 +17,19 @@ Where bundles go: `mdify <path-or-url>` writes the whole bundle to `~/.cache/mar
 worktree that converted them is gone, while a bundle written to `--out` (a harness run, an experiment) is the
 caller's. `mdify check` refuses a source-only directory ("not a complete bundle … (source only)").
 
+## Three pipelines: `--pipeline A|B|AB`
+
+```
+mdify <source> [--pipeline A|B|AB] [--model claude|codex] [--out DIR] [--reader]
+```
+
+- **A (default)** — `mdify report.pdf`: parse the source, no model. Deterministic, ~1 s/page.
+- **B** — `mdify report.pdf --pipeline B`: a vision model writes the markdown and the line boxes (one call per page, 20–50 s).
+- **AB** — `mdify report.pdf --pipeline AB`: the model writes the markdown, the source's own words (text layer, else OCR) place each word.
+- `--model claude|codex` picks the logged-in CLI for B/AB (default claude); with A it is an error. `--reader` is for HTML (A).
+
+Measured on the harness, words correctly placed: A pdf 0.982 / png 0.893; AB pdf 1.0 / png 0.999. WHY A is the default: no model call, repeatable, fast; B and AB are opt-in.
+
 ## Web capture: `mdify capture`
 
 ```

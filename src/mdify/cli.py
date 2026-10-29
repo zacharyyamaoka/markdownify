@@ -1,4 +1,4 @@
-"""`mdify <path-or-url>… [--out DIR]` writes a bundle per source; `mdify check <bundle>…` re-derives its invariants;
+"""`mdify <path-or-url>… [--pipeline A|B|AB] [--model claude|codex] [--out DIR] [--reader]` writes a bundle per source; `mdify check <bundle>…` re-derives its invariants;
 `mdify capture <url> [--keep …] [--out DIR] [--dry-sizes]` captures a web page in one browser visit (CONTRACT §2.1).
 
 Several sources in one run share the loaded models, so the first conversion is timed cold and the rest warm
@@ -13,11 +13,18 @@ import sys
 
 from .cache import display_path
 
+PIPELINES = ("A", "B", "AB")
+
 
 def _convert(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="mdify", description="Any digital source → markdown in which every word "
                                      "links back to where it sits in the source (CONTRACT.md).")
     parser.add_argument("sources", nargs="+", help="a local file or an http(s) URL (PDF, HTML, PNG, JPEG)")
+    parser.add_argument("--pipeline", choices=PIPELINES, default="A", help="A (default): parse the source, no model; "
+                        "B: a vision model writes the markdown and the line boxes; AB: the model writes the "
+                        "markdown, the source's own words place each word")
+    parser.add_argument("--model", choices=("claude", "codex"), help="which logged-in CLI writes the markdown "
+                        "(B and AB only; default claude)")
     parser.add_argument("--out", type=pathlib.Path, help="write the bundle here instead of the cache "
                         "(~/.cache/markdownify/bundles/<sha256>/); one source only")
     parser.add_argument("--reader", action="store_true", help="web pages: Defuddle's reading mode picks the content "
@@ -25,6 +32,8 @@ def _convert(argv: list[str]) -> int:
     arguments = parser.parse_args(argv)
     if arguments.out and len(arguments.sources) > 1:
         parser.error("--out takes one source")
+    if arguments.model and arguments.pipeline == "A":
+        parser.error("--model needs --pipeline B or AB (pipeline A calls no model)")
 
     from . import bundle
     from .fetch import FetchError, FetchRefused
@@ -32,9 +41,8 @@ def _convert(argv: list[str]) -> int:
     status = 0
     for target in arguments.sources:
         try:
-            built = bundle.build(target, arguments.out, log=lambda message: print(message, file=sys.stderr),
-                                 reader=arguments.reader)
-        except (FetchRefused, FetchError, bundle.NoConverter, FileNotFoundError) as error:
+            built = _build(target, arguments)
+        except (FetchRefused, FetchError, bundle.NoConverter, FileNotFoundError, RuntimeError) as error:
             print(f"mdify: {target}: {error}", file=sys.stderr)
             status = 1
             continue
@@ -46,6 +54,21 @@ def _convert(argv: list[str]) -> int:
               f"{time['pages']} pages in {time['seconds']} s ({'cold' if time['cold'] else 'warm'}, "
               f"models {time['model_load_seconds']} s)")
     return status
+
+
+def _build(target: str, arguments: argparse.Namespace):
+    log = lambda message: print(message, file=sys.stderr)  # noqa: E731
+    if arguments.pipeline == "A":
+        from . import bundle
+
+        return bundle.build(target, arguments.out, log=log, reader=arguments.reader)
+    from . import vlm
+
+    # WHY A stays the default (Zach's workflow 1): it is deterministic, needs no model call and runs ~1 s/page;
+    # B and AB cost one model call per page (20–50 s), so they are opt-in. Measured on the harness, words correctly
+    # placed: A pdf 0.982 / png 0.893; AB 1.0 / 0.999.
+    return vlm.build(target, arguments.out, backend=arguments.model or "claude",
+                     place="words" if arguments.pipeline == "AB" else "chars", log=log)
 
 
 def _fmt(value) -> str:
