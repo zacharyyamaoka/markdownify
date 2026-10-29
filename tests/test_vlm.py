@@ -238,3 +238,108 @@ def test_a_failed_call_is_retried_once_then_fails_loudly(tmp_path, monkeypatch):
     assert attempts == ["call-1", "call-2"]
     run = json.loads((tmp_path / "bundle" / "vlm" / "run.json").read_text())
     assert len(run["calls"]) == 2
+
+
+# --- pipeline AB: --place words ---------------------------------------------------------------------------------
+def test_place_words_puts_each_word_on_the_text_layer(tmp_path, monkeypatch):
+    """The same exact line boxes that the character-count split scores 0.5 on "20" and "Nm" (above) place every
+    word exactly once the text layer's own words do it."""
+    source = write_pdf(tmp_path / "in.pdf")
+    ask, _ = fake_model(pdf_lines_in_pixels(source))
+    monkeypatch.setattr(vlm_llm, "ask", ask)
+    built = vlm.build(str(source), tmp_path / "bundle", place="words", cache=Cache(tmp_path / "cache"))
+    index = json.loads((built.directory / "index.json").read_text())
+    assert index["tool"]["pipeline"] == "AB" and index["tool"]["place"] == "words"
+    assert [word["score"] for word in index["words"]] == [1.0] * 8
+    assert not any("placed" in word or "note" in word for word in index["words"])
+    assert built.kpis["inexact_words"] == 0 and built.kpis["silently_lost"] == 0
+    run = json.loads((built.directory / "vlm" / "run.json").read_text())
+    assert run["placement"] == {"source": "text_layer", "source_words": 8, "words": 8, "placed": 8}
+    assert all(result.ok for result in check.check(built.directory))
+
+
+def test_place_words_falls_back_to_the_line_slice_when_nothing_matches(tmp_path, monkeypatch):
+    source = write_pdf(tmp_path / "in.pdf")
+    lines = pdf_lines_in_pixels(source)
+    ask, _ = fake_model([("Nominal speed 300 rpm", lines[0][1])] + lines[1:])
+    monkeypatch.setattr(vlm_llm, "ask", ask)
+    built = vlm.build(str(source), tmp_path / "bundle", place="words", cache=Cache(tmp_path / "cache"))
+    index = json.loads((built.directory / "index.json").read_text())
+    markdown = (built.directory / "document.md").read_text()
+    by_text = {text_of(markdown, word): word for word in index["words"]}
+    # "speed" and "rpm" have no source word in their line: still on their slice, scored by the text layer under it.
+    assert by_text["rpm"]["grounding"] is not None and by_text["rpm"]["score"] < 1.0
+    assert by_text["Peak"]["score"] == 1.0
+
+
+def test_place_words_on_an_image_uses_ocr_word_boxes(tmp_path, monkeypatch):
+    from PIL import Image, ImageDraw, ImageFont
+
+    image = tmp_path / "in.png"
+    picture = Image.new("RGB", (900, 200), "white")
+    font = ImageFont.load_default(size=40)
+    ImageDraw.Draw(picture).text((40, 60), "Rated torque 20 Nm", fill="black", font=font)
+    picture.save(image)
+    # The model's line box is right, but it says one word the page does not ("40" for "20").
+    ask, _ = fake_model([("Rated torque 40 Nm", (35, 55, 420, 110))])
+    monkeypatch.setattr(vlm_llm, "ask", ask)
+    built = vlm.build(str(image), tmp_path / "bundle", place="words", cache=Cache(tmp_path / "cache"))
+    index = json.loads((built.directory / "index.json").read_text())
+    markdown = (built.directory / "document.md").read_text()
+    by_text = {text_of(markdown, word): word for word in index["words"]}
+    assert by_text["Rated"]["note"] == "ocr" and by_text["Rated"]["score"] == 1.0
+    assert by_text["40"]["score"] is None or by_text["40"]["score"] < 1.0
+    run = json.loads((built.directory / "vlm" / "run.json").read_text())
+    assert run["placement"]["source"] == "ocr" and run["placement"]["placed"] >= 3
+
+
+def test_codex_gets_absolute_paths_from_a_relative_run_dir(tmp_path, monkeypatch):
+    """codex runs in `-C <run_dir>/cli-cwd`: a relative image or schema path broke every codex call (2026-10-29)."""
+    seen = {}
+
+    def fake_run(cmd, stdin, run_dir, cwd):
+        seen["cmd"] = cmd
+        (run_dir / "events.jsonl").write_text("")
+        (run_dir / "stderr.txt").write_text("")
+        return 0, 0.0
+    monkeypatch.setattr(vlm_llm, "_run", fake_run)
+    monkeypatch.setattr(vlm_llm, "_version", lambda binary: None)
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "page.png").write_bytes(b"")
+    vlm_llm.ask("codex", pathlib.Path("page.png"), "system", "prompt", {}, pathlib.Path("run"))
+    cmd = seen["cmd"]
+    for flag in ("-i", "--output-schema", "-o", "-C"):
+        assert pathlib.Path(cmd[cmd.index(flag) + 1]).is_absolute(), flag
+
+
+def test_a_ragged_reply_table_is_written_on_a_rectangular_grid(tmp_path, monkeypatch):
+    """A model's cells with a hole at (0, 1) and two cells on (2, 0): written row by row, row 0's "Peak" slid one
+    column left (under "Rated"); `mdify.tables.html_table` keeps every cell at its own column, and the bundle passes
+    `mdify check` invariant 4 (which refuses ragged tables)."""
+    from PIL import Image
+
+    image = tmp_path / "in.png"
+    Image.new("RGB", (400, 300), "white").save(image)
+    cells = [(0, 0, 1, 1, "stubHead", "Model"), (0, 2, 1, 1, "columnHeader", "Peak"),
+             (1, 0, 1, 1, "rowHeader", "KM60"), (1, 1, 1, 1, "content", "3"), (1, 2, 1, 1, "content", "9"),
+             (2, 0, 1, 2, "rowHeader", "KM80"), (2, 0, 1, 1, "content", "x"), (2, 2, 1, 1, "content", "18")]
+    reply = {"blocks": [{"type": "table", "level": 0, "box": [0, 0, 300, 90], "lines": [], "cells": [
+        {"row": row, "col": col, "rowspan": rowspan, "colspan": colspan, "kind": kind, "text": text,
+         "box": [col * 100, row * 30, col * 100 + 90, row * 30 + 25]}
+        for row, col, rowspan, colspan, kind, text in cells]}]}
+
+    def ask(backend, image, system_prompt, prompt, schema, run_dir, model=None):
+        run_dir.mkdir(parents=True, exist_ok=True)
+        return vlm_llm.Reply(backend, "fake-model", reply, None, run_dir, "fake", 0.0)
+    monkeypatch.setattr(vlm_llm, "ask", ask)
+    built = vlm.build(str(image), tmp_path / "bundle", cache=Cache(tmp_path / "cache"))
+    markdown = (built.directory / "document.md").read_text()
+    assert markdown == ('<table>\n<tr><th>Model</th><td></td><th>Peak</th></tr>\n'
+                        '<tr><td>KM60</td><td>3</td><td>9</td></tr>\n'
+                        '<tr><td colspan="2">KM80<br>x</td><td>18</td></tr>\n</table>\n')
+    index = json.loads((built.directory / "index.json").read_text())
+    cell_texts = [align.word_text(markdown, block["range"]["start"], block["range"]["end"])
+                  for block in index["blocks"] if block["type"] == "table_cell"]
+    assert cell_texts == ["Model", "Peak", "KM60", "3", "9", "KM80", "x", "18"]
+    results = {result.name: result for result in check.check(built.directory)}
+    assert results["well formed"].ok, results["well formed"].failures

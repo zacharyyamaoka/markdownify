@@ -1,0 +1,536 @@
+{
+ "key": "vlm-ab-claude",
+ "command": "uv run python -m mdify.vlm {source} --out {bundle} --model claude --place words",
+ "arm": "png",
+ "ran_at": "2026-10-29T21:21:40Z",
+ "cases": {
+  "01-prose-spec": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/01-prose-spec/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/01-prose-spec/png/bundle --model claude --place words",
+   "seconds": 16.693,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 152,
+    "teds_mean": null,
+    "header_path_accuracy": null,
+    "location": {
+     "correct": 152,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.7381,
+    "ledger": {
+     "linked": 152,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 6,
+      "represented": 6,
+      "truth_represented": 6
+     }
+    }
+   }
+  },
+  "02-spec-list": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/02-spec-list/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/02-spec-list/png/bundle --model claude --place words",
+   "seconds": 20.752,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 68,
+    "teds_mean": null,
+    "header_path_accuracy": null,
+    "location": {
+     "correct": 68,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.7327,
+    "ledger": {
+     "linked": 68,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 19,
+      "represented": 19,
+      "truth_represented": 19
+     }
+    }
+   }
+  },
+  "03-simple-table": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/03-simple-table/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/03-simple-table/png/bundle --model claude --place words",
+   "seconds": 21.51,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 50,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 50,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.6926,
+    "ledger": {
+     "linked": 50,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 2,
+      "represented": 2,
+      "truth_represented": 2
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "04-multi-model": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/04-multi-model/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/04-multi-model/png/bundle --model claude --place words",
+   "seconds": 33.231,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 87,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 86,
+     "misplaced": 1,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.988506,
+    "median_iou": 0.6571,
+    "ledger": {
+     "linked": 86,
+     "lost": 1,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 2,
+      "represented": 2,
+      "truth_represented": 2
+     },
+     "complex_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "05-merged-header": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/05-merged-header/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/05-merged-header/png/bundle --model claude --place words",
+   "seconds": 28.621,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 76,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 76,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.657,
+    "ledger": {
+     "linked": 76,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 3,
+      "truth_represented": 3
+     },
+     "complex_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "06-units-in-headers": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/06-units-in-headers/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/06-units-in-headers/png/bundle --model claude --place words",
+   "seconds": 26.901,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 60,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 60,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.6598,
+    "ledger": {
+     "linked": 60,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 2,
+      "represented": 2,
+      "truth_represented": 2
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "07-footnotes": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/07-footnotes/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/07-footnotes/png/bundle --model claude --place words",
+   "seconds": 19.283,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 73,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 73,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.6397,
+    "ledger": {
+     "linked": 68,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 5,
+      "represented": 5,
+      "truth_represented": 5
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "08-two-column": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/08-two-column/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/08-two-column/png/bundle --model claude --place words",
+   "seconds": 25.096,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 106,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 106,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.7238,
+    "ledger": {
+     "linked": 106,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 12,
+      "represented": 12,
+      "truth_represented": 12
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "09-intended-drops": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/09-intended-drops/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/09-intended-drops/png/bundle --model claude --place words",
+   "seconds": 20.754,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 57,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 57,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.6868,
+    "ledger": {
+     "linked": 57,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {
+      "header": 6,
+      "footer": 5
+     },
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 3,
+      "truth_represented": 3
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "10-torque-speed-plot": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/10-torque-speed-plot/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/10-torque-speed-plot/png/bundle --model claude --place words",
+   "seconds": 18.686,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 48,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 48,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.6561,
+    "ledger": {
+     "linked": 48,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {
+      "plot": 14
+     },
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 3,
+      "truth_represented": 3
+     },
+     "plot": {
+      "seen": 1,
+      "represented": 0,
+      "truth_represented": 0
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "11-mixed-chinese": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/11-mixed-chinese/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/11-mixed-chinese/png/bundle --model claude --place words",
+   "seconds": 19.684,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 53,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 53,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.686,
+    "ledger": {
+     "linked": 53,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 3,
+      "truth_represented": 3
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "12-full-datasheet": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/12-full-datasheet/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/12-full-datasheet/png/bundle --model claude --place words",
+   "seconds": 24.906,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 91,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 91,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.7055,
+    "ledger": {
+     "linked": 90,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 10,
+      "represented": 10,
+      "truth_represented": 10
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  }
+ }
+}

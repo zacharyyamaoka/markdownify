@@ -1,0 +1,536 @@
+{
+ "key": "vlm-ab-codex",
+ "command": "uv run python -m mdify.vlm {source} --out {bundle} --model codex --place words",
+ "arm": "pdf",
+ "ran_at": "2026-10-29T21:32:18Z",
+ "cases": {
+  "01-prose-spec": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/01-prose-spec/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/01-prose-spec/pdf/bundle --model codex --place words",
+   "seconds": 51.309,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 152,
+    "teds_mean": null,
+    "header_path_accuracy": null,
+    "location": {
+     "correct": 152,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9994,
+    "ledger": {
+     "linked": 152,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 6,
+      "represented": 6,
+      "truth_represented": 6
+     }
+    }
+   }
+  },
+  "02-spec-list": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/02-spec-list/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/02-spec-list/pdf/bundle --model codex --place words",
+   "seconds": 28.774,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 68,
+    "teds_mean": null,
+    "header_path_accuracy": null,
+    "location": {
+     "correct": 68,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9995,
+    "ledger": {
+     "linked": 68,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 19,
+      "represented": 19,
+      "truth_represented": 19
+     }
+    }
+   }
+  },
+  "03-simple-table": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/03-simple-table/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/03-simple-table/pdf/bundle --model codex --place words",
+   "seconds": 38.635,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 50,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 50,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9993,
+    "ledger": {
+     "linked": 50,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 2,
+      "represented": 2,
+      "truth_represented": 2
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "04-multi-model": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/04-multi-model/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/04-multi-model/pdf/bundle --model codex --place words",
+   "seconds": 56.644,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 87,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 87,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9993,
+    "ledger": {
+     "linked": 87,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 2,
+      "represented": 2,
+      "truth_represented": 2
+     },
+     "complex_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "05-merged-header": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/05-merged-header/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/05-merged-header/pdf/bundle --model codex --place words",
+   "seconds": 39.442,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 76,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 76,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9994,
+    "ledger": {
+     "linked": 76,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 3,
+      "truth_represented": 3
+     },
+     "complex_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "06-units-in-headers": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/06-units-in-headers/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/06-units-in-headers/pdf/bundle --model codex --place words",
+   "seconds": 34.962,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 60,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 60,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9993,
+    "ledger": {
+     "linked": 60,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 2,
+      "represented": 2,
+      "truth_represented": 2
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "07-footnotes": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/07-footnotes/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/07-footnotes/pdf/bundle --model codex --place words",
+   "seconds": 34.847,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 73,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 73,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9994,
+    "ledger": {
+     "linked": 68,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 5,
+      "represented": 5,
+      "truth_represented": 5
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "08-two-column": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/08-two-column/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/08-two-column/pdf/bundle --model codex --place words",
+   "seconds": 78.477,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 106,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 106,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9995,
+    "ledger": {
+     "linked": 106,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 12,
+      "represented": 12,
+      "truth_represented": 12
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "09-intended-drops": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/09-intended-drops/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/09-intended-drops/pdf/bundle --model codex --place words",
+   "seconds": 46.767,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 57,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 57,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9994,
+    "ledger": {
+     "linked": 57,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {
+      "header": 6,
+      "footer": 5
+     },
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 3,
+      "truth_represented": 3
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "10-torque-speed-plot": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/10-torque-speed-plot/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/10-torque-speed-plot/pdf/bundle --model codex --place words",
+   "seconds": 45.669,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 48,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 48,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9994,
+    "ledger": {
+     "linked": 48,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {
+      "plot": 14
+     },
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 3,
+      "truth_represented": 3
+     },
+     "plot": {
+      "seen": 1,
+      "represented": 0,
+      "truth_represented": 0
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "11-mixed-chinese": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/11-mixed-chinese/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/11-mixed-chinese/pdf/bundle --model codex --place words",
+   "seconds": 38.932,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.006309,
+    "substitutions": 2,
+    "deletions": 0,
+    "insertions": 2,
+    "truth_words": 53,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 52,
+     "misplaced": 1,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 0.981132,
+    "median_iou": 0.9994,
+    "ledger": {
+     "linked": 53,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 3,
+      "represented": 1,
+      "truth_represented": 3
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  },
+  "12-full-datasheet": {
+   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/12-full-datasheet/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/12-full-datasheet/pdf/bundle --model codex --place words",
+   "seconds": 49.452,
+   "returncode": 0,
+   "scores": {
+    "ned": 0.0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "truth_words": 91,
+    "teds_mean": 1.0,
+    "header_path_accuracy": 1.0,
+    "location": {
+     "correct": 91,
+     "misplaced": 0,
+     "unlinked": 0,
+     "ambiguous": 0
+    },
+    "location_correct_rate": 1.0,
+    "median_iou": 0.9994,
+    "ledger": {
+     "linked": 90,
+     "lost": 0,
+     "unlinked": 0,
+     "dropped": {},
+     "flagged": {},
+     "wrong_drops": 0,
+     "intended_drops_kept": 0,
+     "intended_drops_lost": 0
+    },
+    "ladder": {
+     "prose": {
+      "seen": 10,
+      "represented": 10,
+      "truth_represented": 10
+     },
+     "simple_table": {
+      "seen": 1,
+      "represented": 1,
+      "truth_represented": 1
+     }
+    }
+   }
+  }
+ }
+}

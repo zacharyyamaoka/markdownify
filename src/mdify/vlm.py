@@ -19,6 +19,8 @@ gets one honest measured run. Nothing here reads the text layer to *place* a wor
   characters. WHY by character count: the model gives line boxes, not word or character boxes, and asking a
   general model for one box per word multiplies the output (and the error) for no measured gain — the same split
   the image path uses for OCR lines (`docling_markdown.box_of_characters`).
+- **Place (`--place words`, pipeline "AB"):** the line box becomes a search window instead of the answer: each word
+  is aligned to the source's own words inside it — the text layer, else RapidOCR's word boxes (`mdify.vlm_place`).
 - **Score:** a word's `score` is its text against the text-layer characters under its box (`pdf.text_under`, the
   checker's own reading), when the page has a text layer. When it has none (a PNG, an HTML screenshot) the score is
   `null` with `note: "unverified"` — NOT 1.0: nothing independent of the model says the word is right.
@@ -53,6 +55,7 @@ MEDIA_TYPES = ("application/pdf", "image/png", "image/jpeg", "text/html", "appli
 PIPELINE = "B"
 COORDINATES = ("pixel", "unit")
 DEFAULT_COORDINATES = "pixel"
+PLACES = ("chars", "words")      # a word's box: its character-count slice of the line, or the source's own word
 ATTEMPTS = 2                     # a page whose call fails (rate limit, no structured reply) is asked once more
 
 TEXT_TYPES = ("heading", "paragraph", "list_item", "caption", "footnote")
@@ -172,6 +175,7 @@ class _Segment:
     page: int
     box: list[float] | None
     lead: int = 0                # characters printed before the markdown text (a stripped bullet) inside the box
+    block: int = 0               # which reply block it came from (`--place words` falls back to the whole block)
 
 
 def _protect(text: str) -> str:
@@ -222,6 +226,7 @@ class _Assembler:
         self.segments: list[_Segment] = []
         self.counters: dict[str, int] = {}
         self.previous_was_list = False
+        self.block_number = 0
 
     def write(self, text: str) -> tuple[int, int]:
         start = self.length
@@ -244,6 +249,7 @@ class _Assembler:
 
     # --- blocks ---
     def add(self, block: dict, page: int, to_box) -> None:
+        self.block_number += 1
         kind = block.get("type")
         box = to_box(block.get("box"))
         grounding = [{"page": page, "box": box}] if box else []
@@ -289,7 +295,7 @@ class _Assembler:
                 self.write(" ")
             segment_start, segment_end = self.write(_escaped(text, first=number == 0))
             self.segments.append(_Segment(segment_start, segment_end, page, to_box(line.get("box")),
-                                          lead if number == 0 else 0))
+                                          lead if number == 0 else 0, self.block_number))
         self.blocks.append({"id": self.new_id(kind), "type": kind, "range": {"start": start, "end": self.length},
                             "grounding": grounding, "represented": True})
 
@@ -320,8 +326,10 @@ class _Assembler:
                        "represented": True, "rows": rows, "cols": cols, "children": []}
         self.blocks.append(table_block)
         start = self.length
-        merged = any(cell["rowspan"] > 1 or cell["colspan"] > 1 for cell in cells)
-        cell_blocks = self.html_table(cells, rows, page) if merged else self.gfm_table(cells, rows, cols, page)
+        # Two cells on one slot cannot both sit in a GFM table; the HTML grid keeps both (`tables.html_table`).
+        merged = any(cell["rowspan"] > 1 or cell["colspan"] > 1 for cell in cells) or \
+            len({(cell["row"], cell["col"]) for cell in cells}) < len(cells)
+        cell_blocks = self.html_table(cells, rows, cols, page) if merged else self.gfm_table(cells, rows, cols, page)
         table_block["range"] = {"start": start, "end": self.length}
         table_block["children"] = [cell["id"] for cell in cell_blocks]
 
@@ -330,7 +338,7 @@ class _Assembler:
                  "row": cell["row"], "col": cell["col"], "rowspan": cell["rowspan"], "colspan": cell["colspan"],
                  "kind": cell["kind"], "grounding": [{"page": page, "box": cell["box"]}] if cell["box"] else []}
         self.blocks.append(block)
-        self.segments.append(_Segment(start, end, page, cell["box"]))
+        self.segments.append(_Segment(start, end, page, cell["box"], block=self.block_number))
         return block
 
     def gfm_table(self, cells: list[dict], rows: int, cols: int, page: int) -> list[dict]:
@@ -353,22 +361,20 @@ class _Assembler:
                 self.write("\n" + "|" + "|".join(["---"] * cols) + "|")
         return blocks
 
-    def html_table(self, cells: list[dict], rows: int, page: int) -> list[dict]:
-        blocks = []
-        self.write("<table>")
-        for row in range(rows):
-            self.write("\n<tr>")
-            for cell in (cell for cell in cells if cell["row"] == row):
-                tag = "th" if cell["kind"] in ("columnHeader", "stubHead") else "td"
-                attributes = (f' rowspan="{cell["rowspan"]}"' if cell["rowspan"] > 1 else "") + \
-                             (f' colspan="{cell["colspan"]}"' if cell["colspan"] > 1 else "")
-                self.write(f"<{tag}{attributes}>")
-                start, end = self.write(_html_escaped(cell["text"]))
-                self.write(f"</{tag}>")
-                blocks.append(self.cell_block(cell, page, start, end))
-            self.write("</tr>")
-        self.write("\n</table>")
-        return blocks
+    def html_table(self, cells: list[dict], rows: int, cols: int, page: int) -> list[dict]:
+        """WHY `mdify.tables.html_table`: a model's cell list is not always a grid either (a missing cell, two cells
+        on one slot, a span over a neighbour); written row by row, the cells after a gap slide one column left and
+        a value reads under the wrong model. The shared builder keeps every cell at its own (row, col) and fills
+        or clips the rest; the index keeps the model's own spans."""
+        from .tables import GridCell, html_table
+
+        grid_cells = [GridCell(row=cell["row"], col=cell["col"], rowspan=cell["rowspan"], colspan=cell["colspan"],
+                               header=cell["kind"] in ("columnHeader", "stubHead"),
+                               text=_html_escaped(cell["text"])) for cell in cells]
+        markup, ranges = html_table(grid_cells, rows, cols)
+        offset, _ = self.write(markup)
+        return [self.cell_block(cell, page, offset + start, offset + end)
+                for cell, (start, end) in zip(cells, ranges)]
 
 
 def _visible(markdown: str, mask: bytes, start: int, end: int) -> int:
@@ -399,8 +405,11 @@ def ground_words(markdown: str, segments: list[_Segment]) -> list[dict]:
     return rows
 
 
-def assemble(replies: list[tuple[int, dict, int, int]], coordinates: str) -> Conversion:
-    """[(page, structured reply, image width px, image height px)] → the Conversion (pages left to the caller)."""
+def assemble(replies: list[tuple[int, dict, int, int]], coordinates: str,
+             units: tuple[list, str] | None = None) -> Conversion:
+    """[(page, structured reply, image width px, image height px)] → the Conversion (pages left to the caller).
+    `units` = (source words, their kind) moves each word onto the source words inside its line (`--place words`,
+    `mdify.vlm_place`); without them a word is its character-count slice of the line box."""
     assembler = _Assembler()
     for page, output, width, height in replies:
         def to_box(box, width=width, height=height):
@@ -410,6 +419,10 @@ def assemble(replies: list[tuple[int, dict, int, int]], coordinates: str) -> Con
                 assembler.add(block, page, to_box)
     markdown = assembler.markdown()
     words = ground_words(markdown, assembler.segments)
+    if units is not None:
+        from . import vlm_place
+
+        vlm_place.place(markdown, words, assembler.segments, *units)
     return Conversion(markdown=markdown, blocks=assembler.blocks, words=words, dropped=assembler.dropped, pages=[])
 
 
@@ -417,8 +430,14 @@ def assemble(replies: list[tuple[int, dict, int, int]], coordinates: str) -> Con
 def score_words(conversion: Conversion, source: Source) -> None:
     """Each linked word against the text-layer characters under its box, as `mdify check` reads them; `null` and
     `note: "unverified"` where there is no text layer to read. WHY never 1.0 by default: a score is a claim that
-    the source says what the markdown says, and for a page image only the model says so."""
+    the source says what the markdown says, and for a page image only the model says so. A word `--place words`
+    put on an OCR word keeps the aligner's score against it, noted "ocr" (an engine apart from the model, but not
+    the source itself)."""
     for word in conversion.words:
+        placed = word.pop("placed", None)
+        if placed == "ocr":
+            word["note"] = "ocr"
+            continue
         word["score"] = None
         if word.get("grounding"):
             word["note"] = "unverified"
@@ -460,22 +479,27 @@ class Run:
     coordinates: str
     models: list[str]
     calls: list[dict]
+    place: str = "chars"
+    placement: dict | None = None     # `--place words`: how many words the source's words placed
 
 
 def convert(source: Source, *, backend: str = "claude", coordinates: str = DEFAULT_COORDINATES,
-            run_dir: pathlib.Path | None = None, model: str | None = None) -> Conversion:
+            run_dir: pathlib.Path | None = None, model: str | None = None, place: str = "chars") -> Conversion:
     conversion, _run = convert_with_run(source, backend=backend, coordinates=coordinates, run_dir=run_dir,
-                                        model=model)
+                                        model=model, place=place)
     return conversion
 
 
 def convert_with_run(source: Source, *, backend: str = "claude", coordinates: str = DEFAULT_COORDINATES,
-                     run_dir: pathlib.Path | None = None, model: str | None = None) -> tuple[Conversion, Run]:
+                     run_dir: pathlib.Path | None = None, model: str | None = None,
+                     place: str = "chars") -> tuple[Conversion, Run]:
     from . import vlm_llm, vlm_pages
     from .cache import Cache
 
     if coordinates not in COORDINATES:
         raise ValueError(f"coordinates must be one of {COORDINATES}")
+    if place not in PLACES:
+        raise ValueError(f"place must be one of {PLACES}")
     run_dir = pathlib.Path(run_dir) if run_dir else Cache().bundle_dir(source.sha256) / f"vlm-{backend}"
     run_dir.mkdir(parents=True, exist_ok=True)
     images = vlm_pages.render(source, run_dir)
@@ -499,10 +523,18 @@ def convert_with_run(source: Source, *, backend: str = "claude", coordinates: st
             _write_run(run_dir, Run(backend, coordinates, models, calls))
             raise RuntimeError(f"page {image.page}: {reply.error} (raw events under {reply.run_dir})")
         replies.append((image.page, reply.output, image.width_px, image.height_px))
-    conversion = assemble(replies, coordinates)
+    units, placement = None, None
+    if place == "words":
+        from . import vlm_place
+
+        units = vlm_place.source_units(source, images)
+    conversion = assemble(replies, coordinates, units)
     conversion.pages = [image.size for image in images]
+    if units is not None:
+        placement = {"source": units[1], "source_words": len(units[0]), "words": len(conversion.words),
+                     "placed": sum(1 for word in conversion.words if word.get("placed"))}
     score_words(conversion, source)
-    run = Run(backend, coordinates, models, calls)
+    run = Run(backend, coordinates, models, calls, place, placement)
     _write_run(run_dir, run)
     return conversion, run
 
@@ -514,7 +546,8 @@ def _write_run(run_dir: pathlib.Path, run: Run) -> None:
 
 # --- a bundle (mdify.bundle.build, with this converter and its options) -----------------------------------------
 def build(target: str, out: pathlib.Path | None = None, *, backend: str = "claude",
-          coordinates: str = DEFAULT_COORDINATES, model: str | None = None, cache=None, log=None):
+          coordinates: str = DEFAULT_COORDINATES, model: str | None = None, place: str = "chars", cache=None,
+          log=None):
     """`mdify.bundle.build` for pipeline B. WHY not bundle.build itself: it picks the converter by media type
     (pipeline A's), and B's backend and coordinate options are not part of the protocol. Everything else — the
     fetch record, index, ledger and KPIs — goes through the same core functions."""
@@ -537,14 +570,17 @@ def build(target: str, out: pathlib.Path | None = None, *, backend: str = "claud
 
     started = time.perf_counter()
     conversion, run = convert_with_run(source, backend=backend, coordinates=coordinates, run_dir=directory / "vlm",
-                                       model=model)
+                                       model=model, place=place)
     # WHY cold, no model load: every page is a fresh CLI process; there is nothing to warm.
     timing = {"seconds": round(time.perf_counter() - started, 3), "cold": True, "model_load_seconds": 0.0}
 
     markdown = conversion.markdown.replace("\r\n", "\n").replace("\r", "\n")
     markdown_bytes = markdown.encode("utf-8")
     index = bundle.index_of(conversion, source, PIPELINE, hashlib.sha256(markdown_bytes).hexdigest())
-    index["tool"].update({"backend": run.backend, "models": run.models, "coordinates": run.coordinates})
+    index["tool"].update({"backend": run.backend, "models": run.models, "coordinates": run.coordinates,
+                          "place": run.place})
+    if place == "words":
+        index["tool"]["pipeline"] = "AB"
     ledger = ledger_module.compute(_scored_for_ledger(index), markdown, inventory(source), f"{__name__}.inventory")
     for entry in ledger["markdown"]["inexact_words"]:
         if entry.get("note") == "unverified":
@@ -576,6 +612,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model-id", help="the model the CLI runs (default: claude-opus-5-5 / gpt-6.1-sol)")
     parser.add_argument("--coordinates", choices=COORDINATES, default=DEFAULT_COORDINATES,
                         help="ask for boxes in image pixels or in 0–1 fractions")
+    parser.add_argument("--place", choices=PLACES, default="chars", help="a word's box: its character-count slice "
+                        "of the model's line box (pipeline B), or the source's own word inside that line — text "
+                        "layer, else OCR (pipeline AB)")
     arguments = parser.parse_args(argv)
 
     from .bundle import NoConverter
@@ -584,7 +623,8 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         built = build(arguments.source, arguments.out, backend=arguments.model, coordinates=arguments.coordinates,
-                      model=arguments.model_id, log=lambda message: print(message, file=sys.stderr))
+                      model=arguments.model_id, place=arguments.place,
+                      log=lambda message: print(message, file=sys.stderr))
     except (FetchRefused, FetchError, NoConverter, FileNotFoundError, RuntimeError) as error:
         print(f"mdify.vlm: {arguments.source}: {error}", file=sys.stderr)
         return 1

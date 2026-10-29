@@ -175,6 +175,8 @@ def ask(backend: str, image: pathlib.Path, system_prompt: str, prompt: str, sche
         model: str | None = None) -> Reply:
     """One call: `image` + `prompt` → the reply to `schema`. Never raises on a model failure; `Reply.error` says."""
     model = model or DEFAULT_MODELS[backend]
+    # WHY absolute: codex runs in `-C <run_dir>/cli-cwd`, so a relative image or schema path would not be found.
+    run_dir, image = run_dir.resolve(), image.resolve()
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "prompt.txt").write_text(system_prompt + "\n\n---\n\n" + prompt, encoding="utf-8")
     (run_dir / "schema.json").write_text(json.dumps(schema, indent=2) + "\n", encoding="utf-8")
