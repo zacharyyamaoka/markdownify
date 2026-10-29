@@ -78,7 +78,7 @@ def find_ffmpeg() -> str:
 
 def hero_video(fresh: bool) -> bytes:
     """The real demo recording, re-encoded smaller (H.264, 1280 px, CRF 34): 781 KB → ~270 KB, text still legible."""
-    source = INPUTS / "hero-markdownify.mp4"
+    source = INPUTS / "hero-view.mp4"
     target = WORK / "hero-1280-crf34.mp4"
     if fresh or not target.is_file() or target.stat().st_mtime < source.stat().st_mtime:
         subprocess.run([find_ffmpeg(), "-v", "error", "-y", "-i", str(source), "-an",
@@ -90,11 +90,8 @@ def hero_video(fresh: bool) -> bytes:
 
 def hero_poster(fresh: bool) -> bytes:
     """A still of the money shot (350.4W spotlit, ~6.4 s in), shown until the video starts."""
-    frame = WORK / "hero-poster.png"
-    if fresh or not frame.is_file():
-        subprocess.run([find_ffmpeg(), "-v", "error", "-y", "-ss", "6.4", "-i", str(INPUTS / "hero-markdownify.mp4"),
-                        "-frames:v", "1", str(frame)], check=True)
-    return jpeg_bytes(Image.open(frame), 1280, quality=70)
+    # WHY a screenshot, not a frame: `mdify view`'s own capture of the 350.4W spotlight is the exact money shot.
+    return jpeg_bytes(Image.open(INPUTS / "view-01-table-value-spotlit.png"), 1280, quality=70)
 
 
 def screenshot(name: str, width: int = SCREENSHOT_WIDTH) -> tuple[str, int, int]:
@@ -780,10 +777,9 @@ def build(fresh: bool) -> pathlib.Path:
         f'poster="{data_uri(poster, "image/jpeg")}">'
         f'<source src="{data_uri(hero, "video/mp4")}" type="video/mp4">'
         'Your viewer cannot play this video; the screenshots below show the same flow.</video>'
-        '<figcaption>12.4 s, muted, a real recording of the prototype viewer running inside the real Clank app. Open the Mean Well LRS-350 PDF → '
-        '<i>Open with… → Markdownify</i> → it reads the file (4.5 s cold) and shows the KPI strip (coverage 100%, '
-        f'traceability 100%) → click <code>350.4W</code> in the markdown and the PDF dims everything but that cell → '
-        f'click <code>88%</code>, same.{c(9)}</figcaption></figure></section>')
+        '<figcaption>11.5 s, muted, a real recording of <code>mdify view</code> — Markdownify\'s own page, no Clank. The Mean Well '
+        'LRS-350 opens with its KPI strip (coverage 100%, traceability 100%) → click <code>350.4W</code> in the markdown and the PDF '
+        f'dims everything but that cell, under its own LRS-350-24 header.{c(9)}</figcaption></figure></section>')
 
     # 3 · black boxes
     add('<section id="boxes"><h2><span class="n">3</span>The four black boxes</h2>'
@@ -799,10 +795,9 @@ def build(fresh: bool) -> pathlib.Path:
         'source only and quotes text.</li>'
         '<li><b>Source Highlighter</b> <code>/home/bam/source-highlighter</code> — source + locations + style in, '
         'marked source out. Its contract owns the Location format everyone else writes.</li>'
-        '<li><b>Viewer</b> — the Markdownify view and the Datasheet values view. Recorded today as a Clank plugin '
-        '(<code>/home/bam/clank-markdownify</code>); <b>moving out of Clank into <code>mdify view</code>, a standalone '
-        'page Markdownify ships itself.</b> Markdownify will not reference Clank (CONTRACT §9, 631ec5d). The video and '
-        'screenshots below are that recorded prototype.</li></ul>'
+        '<li><b>Viewer</b> — the Markdownify view and the Datasheet values view. Now <b><code>mdify view</code>, a standalone page Markdownify ships itself</b> (7f307e1; 16 browser checks pass); '
+        'Markdownify does not reference Clank (CONTRACT §9, 631ec5d). The hero video is <code>mdify view</code>; the screenshots '
+        'further down are the earlier Clank prototype of the same views.</li></ul>'
         f'<p class="small muted">Why build at all: no open-source converter maps its own markdown back to word or '
         f'character locations (Docling, Marker and MinerU stop at blocks); Azure Content Understanding and LandingAI do '
         f'it as hosted services. So we copied LandingAI\'s span-index format and built the one missing piece, the '
@@ -1008,8 +1003,8 @@ def build(fresh: bool) -> pathlib.Path:
         f'Docs suggestion-mode style (CONTRACT §7.1, ffb618f).{c(2, 5)}</li></ul>'
         '<h3>Left</h3><ul>'
         f'<li><b>Blocked on you:</b> RobotParts\' vocabulary change sits on a robotparts lane, not main.{c(12)}</li>'
-        '<li>In progress: the viewer moves out of Clank into <code>mdify view</code>, Markdownify\'s own standalone '
-        'page; Markdownify will not reference Clank. The Clank plugin stays only as today\'s recorded evidence.</li>'
+        '<li>Done: the viewer moved out of Clank into <code>mdify view</code> (7f307e1). The datasheet values view gets built '
+        'from your review-view pick.</li>'
         '<li>Next: spec tables inside iframes (eRob80) and as images in web pages → child bundles (decision b).</li>'
         + ('<li>Next (new today): alt-text groundings — ground an image\'s alt text to the image element, so the '
            'highlighter can draw it (2 of the 15 samples).</li>' if unresolved_alt else '')
@@ -1068,10 +1063,9 @@ def build(fresh: bool) -> pathlib.Path:
 
     # 11 · run
     add('<section id="run"><h2><span class="n">11</span>How to run each thing</h2>')
-    add(command("/usr/bin/node /home/bam/clank-markdownify/scripts/demo.mjs",
-                "<b>Prototype viewer, as recorded</b> — today's Clank plugin on real datasheets; open a PDF → "
-                "<i>Open with… → Markdownify</i>, or <code>lrs-350-24.values.json</code> → Datasheet values (serves "
-                ":5480, host :5481). Being replaced by <code>mdify view</code>"))
+    add(command("uv run --directory /home/bam/markdownify mdify view /home/bam/.cache/markdownify/bundles/ac3e7b8d27dcd72277b6bdbb208586a2343a635edf1ff578fffd131a31713f6f",
+                "<b>The viewer</b> — <code>mdify view</code> on the Mean Well LRS-350: source left, markdown right, KPIs on top; "
+                "click a value and its cell lights up on the PDF. Prints its URL; opens no window"))
     add(command("uv run --directory /home/bam/markdownify mdify /home/bam/markdownify/harness/out/04-multi-model/pdf/source.pdf",
                 "<b>Markdownify, pipeline A</b> (no AI) — bundle lands in <code>~/.cache/markdownify/bundles/&lt;sha256&gt;/</code>"))
     add(command("uv run --directory /home/bam/markdownify mdify /home/bam/markdownify/harness/out/04-multi-model/png/source.png --pipeline AB",
