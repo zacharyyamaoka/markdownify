@@ -1368,6 +1368,8 @@ dependencies = [
 
 [package.optional-dependencies]
 capture = [
+    { name = "pillow" },
+    { name = "playwright" },
     { name = "wacz" },
     { name = "warcio" },
 ]
@@ -1398,6 +1400,8 @@ requires-dist = [
     { name = "jiwer", marker = "extra == 'harness'", specifier = ">=3.0" },
     { name = "lxml", marker = "extra == 'harness'", specifier = ">=5" },
     { name = "pdfplumber", specifier = ">=0.11" },
+    { name = "pillow", marker = "extra == 'capture'", specifier = ">=10" },
+    { name = "playwright", marker = "extra == 'capture'", specifier = ">=1.48" },
     { name = "playwright", marker = "extra == 'harness'", specifier = ">=1.48" },
     { name = "pymupdf", marker = "extra == 'harness'", specifier = ">=1.24" },
     { name = "rapidfuzz", specifier = ">=3.9" },
