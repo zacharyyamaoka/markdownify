@@ -31,6 +31,8 @@ PAGE = """<!doctype html>\r
 <p>The AK70-10 joins a <b>10</b>:1 planetary gearbox to a 24V motor. Rated torque 8.3&nbsp;Nm and peak torque 24.8 N&middot;m.</p>\r
 <p>It weighs 521g and ships with a CAN cable. Its encoder resolves 14 bits per turn, so the output position is known
 after power-up without homing. Each actuator is tested on a dynamometer before it leaves the factory.</p>\r
+<p><img src="/img/curve.png" alt="Torque&ndash;speed curve at 24 V"></p>\r
+<svg width="200" height="100"><title>Tooltip</title><text x="10" y="90">Speed (rpm)</text><text x="10" y="10">Torque (N·m)</text></svg>\r
 <div style="display:none">Hidden promo text</div>\r
 <div style="visibility: hidden" class="wow">Revealed on scroll</div>\r
 <table>\r
@@ -77,6 +79,24 @@ def test_every_markdown_word_is_linked_and_faithful(page_source, conversion):
         assert normalize(mdify_html.text_under(page_source, word["grounding"])) == normalize(markdown_text)
 
 
+def test_svg_labels_are_visible_words_in_a_flagged_figure(page_source, conversion):
+    """An svg's drawn <text> is visible, so it is in the inventory; Defuddle keeps the svg as raw HTML, which is not
+    a conversion of the drawing, so its block is a figure with represented: false. Its labels still point at the
+    svg's <text>, its <title> tooltip is not a word."""
+    decoded = mdify_html.decoded_html(page_source)
+    texts = _word_texts(conversion)
+    located = {texts[word["range"]["start"]]: word["grounding"]["html"] for word in conversion.words}
+    assert located["Speed"]["xpath"].endswith("/svg/text[1]")
+    assert decoded[located["Speed"]["source_range"]["start"]:located["Speed"]["source_range"]["end"]] == "Speed"
+    inventory_words = {word.text for word in mdify_html.inventory(page_source)}
+    assert "Speed" in inventory_words and "Tooltip" not in inventory_words
+    figures = [block for block in conversion.blocks if block["type"] == "figure"]
+    assert len(figures) == 1 and figures[0]["represented"] is False
+    assert figures[0]["grounding"][0]["html"]["xpath"].endswith("/svg")
+    # An image keeps its alt inside ![…](…), which is markdown syntax, not words.
+    assert "![Torque–speed curve at 24 V]" in conversion.markdown and "curve" not in located
+
+
 def test_ranges_are_code_points_into_the_decoded_html(page_source, conversion):
     decoded = mdify_html.decoded_html(page_source)
     texts = _word_texts(conversion)
@@ -110,6 +130,23 @@ def test_navigation_menu_and_footer_are_dropped_with_reasons(page_source, conver
     covering = [drop for drop in conversion.dropped
                 if drop["grounding"]["html"]["source_range"]["start"] <= menu_entry < drop["grounding"]["html"]["source_range"]["end"]]
     assert [drop["reason"] for drop in covering] in (["navigation"], ["header"])
+
+
+def test_a_table_row_classed_header_is_kept(tmp_path):
+    """Defuddle's partial selectors remove <tr class="header"> (pandoc's header row) as page chrome. Table parts
+    lose their classes before Defuddle looks, so the header row reaches the markdown as column headers."""
+    page = ("<html><body><main><p>Units live in the column headers; the cells hold bare numbers only, and the "
+            "table below lists every model of the series with its rated values.</p><table>"
+            "<tr class=\"header\"><th>Model</th><th>Rated torque (N·m)</th></tr>"
+            "<tr><td>KM60-6</td><td>3</td></tr><tr><td>KM70-10</td><td>8.3</td></tr></table></main></body></html>")
+    path = tmp_path / "source.html"
+    path.write_text(page, encoding="utf-8")
+    source = Source(path, hashlib.sha256(page.encode()).hexdigest(), "text/html", URL)
+    conversion = mdify_html.convert(source)
+    assert "| Model | Rated torque (N·m) |" in conversion.markdown
+    cells = [block for block in conversion.blocks if block["type"] == "table_cell"]
+    headers = [conversion.markdown[cell["range"]["start"]:cell["range"]["end"]] for cell in cells if cell["kind"] == "columnHeader"]
+    assert headers == ["Model", "Rated torque (N·m)"]
 
 
 def test_inventory_is_visible_text_only(page_source):
@@ -189,6 +226,20 @@ def _cached(prefix: str) -> Source | None:
         meta = json.loads(sidecar.read_text())
         return Source(CACHE / meta["sha256"], meta["sha256"], meta["media_type"], meta["retrievals"][0]["url"])
     return None
+
+
+def test_cubemars_alt_text_written_as_a_caption_points_at_the_alt_attribute():
+    """On the older CubeMars template Defuddle moves each highlight icon's alt ("Fully Integrated Design") out of
+    the image into its own paragraph; those words point into the alt attribute, not at the visible title."""
+    source = _cached(CUBEMARS_PAGES[1])
+    if source is None:
+        pytest.skip("robotparts ingest cache not on this machine")
+    conversion = mdify_html.convert(source)
+    texts = _word_texts(conversion)
+    fully = [word["grounding"]["html"]["xpath"] for word in conversion.words
+             if texts[word["range"]["start"]] == "Fully" and word["grounding"]]
+    assert any(xpath.endswith("/img/@alt") for xpath in fully)
+    assert any(not xpath.endswith("/@alt") for xpath in fully)
 
 
 @pytest.mark.parametrize("prefix", CUBEMARS_PAGES)

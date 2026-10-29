@@ -4,7 +4,7 @@
  * page already decoded to a string by `mdify.html`, so both sides count offsets in the same string — and writes one
  * JSON object to stdout.
  *
- *   node mdify_html.mjs convert     the markdown, its blocks, the inventory (+ image alt words) and what
+ *   node mdify_html.mjs convert     the markdown, its blocks, the inventory (+ alt and svg words) and what
  *                                   Defuddle left out
  *   node mdify_html.mjs inventory   the inventory alone; never loads Defuddle
  *
@@ -44,10 +44,12 @@ console.log = console.info = console.warn = console.debug = (...args) => process
 
 const STAMP = 'data-mdify-id';
 
-// Never rendered as page text: the document head, code, templates, embedded documents and graphics.
-// WHY svg: its <text> is visible, but it is drawing labels, not prose (robotparts' html reader skips it too).
-const INVISIBLE_TAGS = new Set(['head', 'title', 'script', 'style', 'noscript', 'template', 'svg', 'iframe', 'object',
-  'embed', 'canvas', 'video', 'audio', 'datalist']);
+// Never rendered as page text: the document head, code, templates, embedded documents, and the parts of an svg
+// that are not drawn (its <title>/<desc> tooltips, definitions). An svg's <text> IS drawn: a chart's axis labels are
+// visible words, so they are in the inventory (and land as flagged, inside the svg's represented:false block).
+const INVISIBLE_TAGS = new Set(['head', 'title', 'script', 'style', 'noscript', 'template', 'iframe', 'object',
+  'embed', 'canvas', 'video', 'audio', 'datalist', 'desc', 'defs', 'symbol', 'metadata', 'clipPath', 'mask',
+  'marker', 'pattern', 'linearGradient', 'radialGradient']);
 // Elements that flow inside a line: a word may run across them ("<b>20</b>Nm" is one word on screen). Every other
 // element starts and ends a box, so a word never joins across it.
 const INLINE_TAGS = new Set(['a', 'abbr', 'b', 'bdi', 'bdo', 'big', 'cite', 'code', 'data', 'del', 'dfn', 'em',
@@ -64,6 +66,9 @@ const BLOCK_TYPES = {
   h1: 'heading', h2: 'heading', h3: 'heading', h4: 'heading', h5: 'heading', h6: 'heading',
   p: 'paragraph', dt: 'paragraph', dd: 'paragraph', li: 'list_item', pre: 'code',
   table: 'table', td: 'table_cell', th: 'table_cell', caption: 'caption', figcaption: 'caption',
+  // WHY figure, represented false: Defuddle keeps an inline svg as raw HTML, which is not a conversion of what it
+  // draws; whether it is a plot or a diagram is not known from markup, so it is the general kind.
+  svg: 'figure',
 };
 
 // Why Defuddle dropped a subtree, read from the subtree's own markup (nearest element first). The reasons are
@@ -77,6 +82,7 @@ const NAVIGATION_NAME = NAME('nav|navbar|navigation|menu|menus|megamenu|mega-men
 const HEADER_NAME = NAME('header|masthead|topbar|top-bar');
 const FOOTER_NAME = NAME('footer|copyright');
 const ASIDE_NAME = NAME('sidebar|aside');
+const TABLE_PARTS = new Set(['table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col']);
 
 const SENTINEL_START_OPEN = '', SENTINEL_START_CLOSE = '';
 const SENTINEL_END_OPEN = '', SENTINEL_END_CLOSE = '';
@@ -204,19 +210,40 @@ class Page {
     return { starts, ends };
   }
 
-  altWords() {
-    /** Words of each image's alt text, located inside the attribute value. WHY: Defuddle writes an image's alt
-     * as a caption paragraph when the image has no caption of its own, so those markdown words have no visible
-     * text node to point at — but they do have exact source characters. Not part of the inventory: alt text is
-     * not visible page text, so the ledger's source side never counts it. */
+  extraWords() {
+    /** Words Defuddle can write that are not visible page text, located exactly: an svg's tooltip, and an image's
+     * alt text inside the attribute value — Defuddle writes alt as a caption paragraph when the image has none of
+     * its own. Not
+     * part of the inventory, so the ledger's source side never counts them; they only give those markdown words
+     * a place to point. */
     const words = [];
+    const shown = (element) => {
+      for (let up = element.parentElement; up; up = up.parentElement) {
+        if (up.localName !== 'title' && up.localName !== 'desc' && this.hidden(up)) return false;
+      }
+      return true;
+    };
+    // An svg's <title>/<desc> is a tooltip, not drawn text — but Defuddle keeps it inside the raw svg it writes.
+    for (const tooltip of this.document.querySelectorAll('svg title, svg desc')) {
+      if (!shown(tooltip)) continue;
+      const box = this.number.get(tooltip);
+      for (const node of tooltip.childNodes) {
+        if (node.nodeType !== 3 || !node.data.trim()) continue;
+        const units = this.textUnits(node);
+        if (!units) continue;
+        for (const match of node.data.matchAll(/\S+/g)) {
+          const first = match.index, last = match.index + match[0].length - 1;
+          words.push({ text: match[0], source_range: this.range([units.starts[first], units.ends[last]]),
+            xpath: this.xpaths.get(tooltip), element: box, box, attribute: null });
+        }
+      }
+    }
     for (const image of this.document.querySelectorAll('img[alt]')) {
-      let shown = true;
-      for (let up = image; up && shown; up = up.parentElement) if (this.hidden(up)) shown = false;
+      if (!shown(image) || this.hidden(image)) continue;
       const location = this.dom.nodeLocation(image);
       const attribute = location && location.attrs && location.attrs.alt;
       const value = image.getAttribute('alt');
-      if (!shown || !attribute || !value.trim()) continue;
+      if (!attribute || !value.trim()) continue;
       const written = this.html.slice(attribute.startOffset, attribute.endOffset);
       let at = written.indexOf('=') + 1;
       if (at <= 0) continue;
@@ -304,6 +331,9 @@ class Page {
       if (tag === 'footer' || role === 'contentinfo') return { reason: 'footer', detail: tag === 'footer' ? '<footer>' : 'role=contentinfo' };
       if (tag === 'aside' || role === 'complementary') return { reason: 'boilerplate', detail: 'aside' };
       if (tag === 'body' || tag === 'html') break;
+      // WHY: a table's own parts are never page chrome, whatever their class says (pandoc writes
+      // <tr class="header"> for a header row, and Defuddle's partial selector removes it as a page header).
+      if (TABLE_PARTS.has(tag)) continue;
       if (NAVIGATION_NAME.test(name)) return { reason: 'navigation', detail: `.${name.trim().split(/\s+/)[0]}` };
       if (HEADER_NAME.test(name)) return { reason: 'header', detail: `.${name.trim().split(/\s+/)[0]}` };
       if (FOOTER_NAME.test(name)) return { reason: 'footer', detail: `.${name.trim().split(/\s+/)[0]}` };
@@ -399,6 +429,10 @@ async function convert(page, url) {
   // jsdom's locations across the re-parse.
   // WHY useAsync false: no third-party fetches — a conversion reads only the cached bytes.
   const stampedDocument = parseLinkedomHTML(page.dom.serialize(), url || undefined);
+  // WHY: a table's own parts are never page chrome, but Defuddle's partial selectors read their class as if they
+  // were: pandoc's <tr class="header"> header row is removed as a page header, and with it every column header a
+  // value's meaning depends on. Their classes only style the table, so they go before Defuddle looks.
+  for (const part of stampedDocument.querySelectorAll('table, thead, tbody, tfoot, tr, th, td')) part.removeAttribute('class');
   const result = await Defuddle(stampedDocument, url || 'about:blank', { useAsync: false });
 
   const host = new JSDOM('', { virtualConsole: new VirtualConsole() }).window.document;
@@ -423,6 +457,7 @@ async function convert(page, url) {
     let parent = null;
     for (let up = element.parentElement; up; up = up.parentElement) if (blockOf.has(up)) { parent = blockOf.get(up); break; }
     const block = { number: blocks.length, type: BLOCK_TYPES[element.localName], tag: element.localName,
+      represented: element.localName !== 'svg',
       element: stamp === null ? null : Number(stamp), parent, depth: parent === null ? 0 : blocks[parent].depth + 1 };
     if (cellInfo.has(element)) Object.assign(block, cellInfo.get(element));
     blockOf.set(element, block.number);
@@ -523,7 +558,7 @@ async function convert(page, url) {
     marked_markdown: stripped.markdown === referenceMarkdown ? null : stripped.markdown,
     blocks: outBlocks,
     inventory,
-    alt_words: page.altWords(),
+    extra_words: page.extraWords(),
     dropped,
     kept_elements: kept.size,
     title: result.title || null,

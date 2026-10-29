@@ -18,7 +18,9 @@ that "boilerplate" would hide exactly the loss the ledger exists to show. Those 
 
 The inventory (`inventory`) is the page's visible text nodes, read by jsdom alone — `mdify_html.mjs inventory`
 never loads Defuddle — so the ledger is not graded by the code it grades. "Visible" is markup-only for v0: no
-<head>/script/style/template/svg, no `hidden`, no inline display:none; CSS classes are not evaluated.
+<head>/script/style/template, no svg tooltip or definitions (an svg's drawn <text> is visible), no `hidden`, no
+inline display:none (visibility:hidden counts as visible: scroll-reveal scripts ship real content that way); CSS
+classes are not evaluated.
 """
 
 from __future__ import annotations
@@ -232,9 +234,9 @@ def convert(source: Source) -> Conversion:
     output = _run("convert", source)
     markdown = output["reference_markdown"]
     decoded = decoded_html(source)
-    # Alignment sees the visible words plus image alt words (Defuddle writes alt text as a caption); only the
-    # visible words are the inventory, so alt words never count on the ledger's source side.
-    page = _Page(decoded, output["inventory"] + output["alt_words"])
+    # Alignment sees the visible words plus image alt text (Defuddle writes alt as a caption); only the visible
+    # words are the inventory, so alt words never count on the ledger's source side.
+    page = _Page(decoded, output["inventory"] + output["extra_words"])
     source_words = page.words
 
     # Source words Defuddle did not remove are the alignment candidates; a removed word can still be found by the
@@ -293,7 +295,8 @@ def convert(source: Source) -> Conversion:
 
     contract_blocks = []
     for block in blocks:
-        record = {"id": block["id"], "type": block["type"], "range": block["range"], "represented": True}
+        record = {"id": block["id"], "type": block["type"], "range": block["range"],
+                  "represented": block["represented"]}
         record["grounding"] = ([{"html": {"source_range": block["source_range"], "xpath": block["xpath"]}}]
                                if block["source_range"] is not None else _grounding_from_words(words, block["range"]))
         if block["children"]:
