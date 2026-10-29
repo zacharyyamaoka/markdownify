@@ -72,3 +72,28 @@ Measured 2026-10-29 (1280 px viewport):
 | CubeMars AK80-9 | 167 KB | 1.5 MB | 5.2 MB | 6.1 MB (197 responses) | same size, 0.09 % pixels changed |
 | ZeroErr eRob80 | 84 KB | 1.2 MB | 6.9 MB | 7.3 MB (117 responses) | same size, 0.08 % pixels changed |
 | moteus hardware reference | 45 KB | 164 KB | 95 KB | 285 KB (18 responses) | identical |
+
+## The viewer: `mdify view`
+
+```
+mdify view <source-or-bundle> [--port N] [--pipeline A|B|AB]
+```
+
+Markdownify's own page for one bundle: the source on the left (drawn by the Source Highlighter, CONTRACT §9), the
+markdown on the right (rendered, or the raw `document.md`), and the KPI strip on top (time, coverage, traceability,
+lost, unlinked, the representation ladder). Click a markdown word or table cell and its grounding lights up on the
+source in the chosen style (highlight / box / spotlight / blackout); click the source and the markdown words there
+light up. The Ledger panel lists the lost and unlinked words, each a click away from its place.
+
+- A bundle directory opens as is; a file or URL is converted first, exactly as `mdify <source>` does.
+- It serves on 127.0.0.1 (`--port 0`, the default, takes any free port) and prints the URL. It opens no browser
+  window. Ctrl-C stops it.
+- Every pane boundary drags and is remembered per browser; the KPI strip and the Ledger fold.
+- The page is `src/mdify/viewer/` (plain ES modules, no build). The browser modules it needs — the Source
+  Highlighter, PDF.js and the lezer markdown parser — are pinned copies in `viewer/vendor/`, each with its origin,
+  version and sha256 in `VENDOR.json` (checked by `tests/test_view.py`).
+
+Tests: `uv run pytest tests/test_view.py` (server and command); `uv run pytest tests/test_view_journey.py -s` drives
+the page in headless Chromium on cached bundles and measures every link (`getBoundingClientRect` against the bundle's
+own geometry, ±1 px). `uv run python tests/test_view_journey.py --media` also records the hero video and stills into
+`reports/media/view/`.

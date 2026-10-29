@@ -1,0 +1,127 @@
+/* mdify view. Calm: one answer first, detail on demand; amber only for what misses its target, red only for errors. */
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #656d76;
+  --subtle: #f6f8fa;
+  --well: #eef0f3;
+  --border: #d8dee4;
+  --accent: #1f2328;
+  --warn: #b45309;
+  --error: #b42318;
+  --hover: rgba(31, 35, 40, 0.06);
+  /* WHY the highlighter's own yellow (#ffe600, its STYLE_DEFAULTS.highlight): the lit word on the right and its
+     mark on the left read as one colour, one thing. */
+  --lit: rgba(255, 230, 0, 0.55);
+  --lit-edge: rgba(201, 168, 0, 0.7);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16181c;
+    --fg: #e6e8eb;
+    --muted: #9aa2ad;
+    --subtle: #1d2025;
+    --well: #23262c;
+    --border: #33373e;
+    --accent: #e6e8eb;
+    --warn: #f0a24a;
+    --error: #f97066;
+    --hover: rgba(230, 232, 235, 0.08);
+    --lit: rgba(255, 230, 0, 0.35);
+    --lit-edge: rgba(255, 230, 0, 0.6);
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+#app { height: 100%; }
+[hidden] { display: none !important; }
+.loading, .failed { margin: 0; padding: 24px; color: var(--muted); }
+.failed h2 { margin: 0 0 8px; font-size: 1rem; color: var(--error); }
+.warn { color: var(--warn); }
+.muted { color: var(--muted); }
+
+.viewer { display: flex; flex-direction: column; height: 100%; }
+
+/* ---- the KPI strip */
+.strip { flex: none; border-bottom: 1px solid var(--border); background: var(--bg); }
+.strip-bar { display: flex; align-items: center; gap: 8px; padding: 6px 8px; min-width: 0; }
+.headline { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.strip-detail {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 24px;
+  padding: 8px 12px; border-top: 1px solid var(--border);
+}
+.kpi { display: flex; flex-direction: column; }
+.kpi-label { font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.kpi-label-inline { color: var(--muted); }
+.kpi-value { font-variant-numeric: tabular-nums; }
+.rungs { display: flex; flex-wrap: wrap; gap: 12px; }
+.strip[data-open="false"] [data-testid="kpi-fold"] svg { transform: rotate(-90deg); }
+
+button {
+  font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 6px;
+  cursor: pointer;
+}
+button:hover { background: var(--hover); }
+button:focus-visible, .handle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.icon { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; }
+.icon svg { transition: transform 120ms ease; }
+.toggle { padding: 2px 8px; font-size: 0.8rem; border-color: var(--border); white-space: nowrap; }
+.toggle[aria-pressed="true"] { background: var(--well); border-color: var(--muted); }
+.segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; flex: none; }
+.segmented button { padding: 2px 8px; font-size: 0.8rem; border: 0; border-radius: 0; text-transform: capitalize; }
+.segmented button + button { border-left: 1px solid var(--border); }
+.segmented button[aria-pressed="true"] { background: var(--well); font-weight: 600; }
+
+/* ---- the panes */
+.panes { display: flex; flex: 1; min-height: 0; }
+.pane { min-width: 0; height: 100%; overflow: auto; }
+.handle {
+  flex: 0 0 6px; cursor: col-resize; background: var(--border); background-clip: content-box;
+  padding: 0 2px; touch-action: none;
+}
+.handle:hover, .panes[data-dragging] .handle { background-color: var(--muted); padding: 0 1px; }
+.panes[data-dragging] { cursor: col-resize; user-select: none; }
+.panes[data-dragging] iframe { pointer-events: none; }
+
+.source { background: var(--well); padding: 12px; }
+.pane-failed { margin: 0; color: var(--error); }
+
+.doc { padding: 16px 24px; line-height: 1.6; }
+.doc h1, .doc h2, .doc h3, .doc h4 { margin: 1.1em 0 0.4em; font-weight: 600; line-height: 1.3; }
+.doc h1 { font-size: 1.35rem; }
+.doc h2 { font-size: 1.1rem; }
+.doc h3 { font-size: 1rem; }
+.doc p { margin: 0.5em 0; }
+.doc ul, .doc ol { margin: 0.4em 0; padding-left: 1.4em; }
+.doc li { margin: 0.1em 0; }
+.doc code { font-family: var(--mono); font-size: 0.85em; }
+.doc pre { white-space: pre-wrap; font-family: var(--mono); font-size: 0.8rem; }
+.doc blockquote { margin: 0.5em 0; padding-left: 12px; border-left: 3px solid var(--border); color: var(--muted); }
+.doc table { margin: 0.75em 0; border-collapse: collapse; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.doc th, .doc td { border: 1px solid var(--border); padding: 0.2rem 0.45rem; vertical-align: top; text-align: left; }
+.doc th { background: var(--subtle); font-weight: 600; }
+.doc [data-cell] { cursor: pointer; }
+.doc .md-raw { margin: 0; font-size: 0.78rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.md-word { cursor: pointer; border-radius: 2px; }
+.md-word:hover { background: var(--hover); }
+.md-word[data-selected] { background: var(--lit); box-shadow: 0 0 0 1px var(--lit-edge); }
+/* Unlinked words are the one warning the markdown side can show: amber, and only on them. */
+.md-word[data-unlinked] { text-decoration: underline dotted var(--warn); text-underline-offset: 3px; }
+
+.inspector { border-left: 0; font-size: 0.85rem; }
+.ledger section { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.ledger h3 { margin: 0 0 4px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.ledger p { margin: 4px 0; }
+.ledger ul { margin: 0; padding: 0; list-style: none; }
+.ledger li button {
+  display: block; width: 100%; padding: 1px 4px; text-align: left; border: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}

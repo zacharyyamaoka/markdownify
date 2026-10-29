@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Markdownify</title>
+<link rel="stylesheet" href="/static/viewer.css">
+<!-- WHY an import map: the pinned lezer modules import each other by package name, as published; the map points
+     those names at vendor/ so they load unmodified (vendor/VENDOR.json). -->
+<script type="importmap">
+{
+  "imports": {
+    "@lezer/common": "/static/vendor/lezer/common.js",
+    "@lezer/highlight": "/static/vendor/lezer/highlight.js",
+    "@lezer/markdown": "/static/vendor/lezer/markdown.js"
+  }
+}
+</script>
+<script type="module" src="/static/app.js"></script>
+</head>
+<body>
+<div id="app">
+  <p id="loading" class="loading">Reading the bundle…</p>
+  <div id="viewer" class="viewer" data-testid="viewer" hidden>
+    <header class="strip" data-testid="kpi-strip" data-open="true">
+      <div class="strip-bar">
+        <button type="button" class="icon" data-testid="kpi-fold" aria-expanded="true" aria-label="Fold the KPIs">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="headline" data-testid="kpi-headline"></span>
+        <div class="segmented" role="group" aria-label="Mark style" data-testid="style-picker"></div>
+        <button type="button" class="toggle" data-testid="raw-toggle" aria-pressed="false">Markdown source</button>
+        <button type="button" class="toggle" data-testid="inspector-toggle" aria-pressed="false">Ledger</button>
+      </div>
+      <div class="strip-detail" data-testid="kpi-detail"></div>
+    </header>
+    <main class="panes" data-testid="panes">
+      <section class="pane source" data-testid="source-pane" aria-label="Source"></section>
+      <div class="handle" role="separator" aria-orientation="vertical" aria-label="Resize the source and the markdown" tabindex="0" data-testid="splitter-source-output"></div>
+      <section class="pane doc" data-testid="markdown-pane" aria-label="Markdown"></section>
+      <div class="handle" role="separator" aria-orientation="vertical" aria-label="Resize the ledger" tabindex="0" data-testid="splitter-output-inspector" hidden></div>
+      <aside class="pane inspector" data-testid="ledger-inspector" aria-label="Ledger" hidden></aside>
+    </main>
+  </div>
+</div>
+</body>
+</html>

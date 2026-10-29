@@ -1,5 +1,6 @@
 """`mdify <path-or-url>… [--pipeline A|B|AB] [--model claude|codex] [--out DIR] [--reader]` writes a bundle per source; `mdify check <bundle>…` re-derives its invariants;
-`mdify capture <url> [--keep …] [--out DIR] [--dry-sizes]` captures a web page in one browser visit (CONTRACT §2.1).
+`mdify capture <url> [--keep …] [--out DIR] [--dry-sizes]` captures a web page in one browser visit (CONTRACT §2.1);
+`mdify view <source-or-bundle> [--port N] [--pipeline A|B|AB]` serves Markdownify's own page for one bundle.
 
 Several sources in one run share the loaded models, so the first conversion is timed cold and the rest warm
 (kpis.json `time.cold`).
@@ -134,14 +135,58 @@ def _capture(argv: list[str]) -> int:
     return 0 if captured.archive_check is None or captured.archive_check["ok"] else 1
 
 
+def _view(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="mdify view", description="Markdownify's own page for one bundle: the "
+                                     "source beside its markdown, every word linked both ways, and the KPIs on top. "
+                                     "Serves on 127.0.0.1 and prints the URL; opens no browser window.")
+    parser.add_argument("target", help="a bundle directory (opened as is), or a local file or http(s) URL "
+                        "(converted first, exactly as `mdify <source>` does)")
+    parser.add_argument("--port", type=int, default=0, help="port to serve on (default: any free one)")
+    parser.add_argument("--pipeline", choices=PIPELINES, default="A", help="how to convert a source (as `mdify "
+                        "--pipeline`); ignored for a bundle directory")
+    arguments = parser.parse_args(argv)
+
+    from . import view
+
+    directory = pathlib.Path(arguments.target)
+    if not directory.is_dir():
+        from . import bundle
+        from .fetch import FetchError, FetchRefused
+
+        options = argparse.Namespace(pipeline=arguments.pipeline, model=None, out=None, reader=False)
+        try:
+            directory = _build(arguments.target, options).directory
+        except (FetchRefused, FetchError, bundle.NoConverter, FileNotFoundError, RuntimeError) as error:
+            print(f"mdify view: {arguments.target}: {error}", file=sys.stderr)
+            return 1
+    try:
+        server = view.Server(directory, arguments.port)
+    except view.NotABundle as error:
+        print(f"mdify view: {error}", file=sys.stderr)
+        return 1
+    except OSError as error:
+        print(f"mdify view: port {arguments.port}: {error.strerror or error}", file=sys.stderr)
+        return 1
+    print(display_path(server.bundle))
+    print(f"  {server.url}", flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == "check":
         return _check(argv[1:])
     if argv and argv[0] == "capture":
         return _capture(argv[1:])
+    if argv and argv[0] == "view":
+        return _view(argv[1:])
     return _convert(argv)
-
 
 if __name__ == "__main__":
     sys.exit(main())

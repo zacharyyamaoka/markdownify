@@ -1,0 +1,46 @@
+{
+  "_why": "mdify view is served by the stdlib with no build step and no network, so the browser modules it needs are pinned copies here. tests/test_view.py re-hashes every file against this record. To update one: copy the new file, then change its version, origin and sha256 here together.",
+  "files": {
+    "source-highlighter.js": {
+      "project": "source-highlighter",
+      "origin": "/home/bam/source-highlighter js/source-highlighter.js",
+      "git_sha": "a3d6e0c68984b558a609856fecf5746aab6e2db1",
+      "sha256": "6ecf97bebb46ec8d53723bdfee1f2cf2a974bc1ef6a974b1bcbce66924798d43"
+    },
+    "lezer/markdown.js": {
+      "project": "@lezer/markdown",
+      "version": "1.7.2",
+      "origin": "https://registry.npmjs.org/@lezer/markdown/-/markdown-1.7.2.tgz dist/index.js",
+      "license": "MIT (lezer/LICENSE.markdown)",
+      "sha256": "7fefe4244953c37fe16634a264c83e28c25356d91133f10b90f9d5a08ae16e9c"
+    },
+    "lezer/common.js": {
+      "project": "@lezer/common",
+      "version": "1.5.4",
+      "origin": "https://registry.npmjs.org/@lezer/common/-/common-1.5.4.tgz dist/index.js",
+      "license": "MIT (lezer/LICENSE.common)",
+      "sha256": "58430844057fbc5f8c4eebd47d3bcccecd37f30e5ff9a18b43c82a9c99c5d136"
+    },
+    "lezer/highlight.js": {
+      "project": "@lezer/highlight",
+      "version": "1.2.5",
+      "origin": "https://registry.npmjs.org/@lezer/highlight/-/highlight-1.2.5.tgz dist/index.js",
+      "license": "MIT (lezer/LICENSE.highlight)",
+      "sha256": "8984bb2887a6354d3e5ac79bdd7e522948f1cee1dda16aac77d9473f10696d7c"
+    },
+    "pdfjs/pdf.min.mjs": {
+      "project": "pdfjs-dist",
+      "version": "6.4.299",
+      "origin": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-6.4.299.tgz build/pdf.min.mjs",
+      "license": "Apache-2.0 (pdfjs/LICENSE)",
+      "sha256": "57456c8e0c81e46be31174b499ef77f2b9f5ee46d04412ba627320a36755d4c2"
+    },
+    "pdfjs/pdf.worker.min.mjs": {
+      "project": "pdfjs-dist",
+      "version": "6.4.299",
+      "origin": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-6.4.299.tgz build/pdf.worker.min.mjs",
+      "license": "Apache-2.0 (pdfjs/LICENSE)",
+      "sha256": "9536359f1b8367850d485731ca1d5e45c159a7b7a0912325e539937aa21ceb18"
+    }
+  }
+}
