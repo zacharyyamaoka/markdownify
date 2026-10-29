@@ -40,7 +40,7 @@ REFUSED_HOSTS = {
     "octopart.com": "Octopart/Nexar data may not be stored beyond 24 h (nexar.com/api/legal); this cache keeps every input",
     "nexar.com": "Octopart/Nexar data may not be stored beyond 24 h (nexar.com/api/legal); this cache keeps every input",
 }
-CITABLE_MEDIA_TYPES = ("application/pdf", "text/html", "image/png", "image/jpeg")
+CITABLE_MEDIA_TYPES = ("application/pdf", "text/html", "image/png", "image/jpeg", "image/webp")
 
 
 class FetchRefused(Exception):
@@ -92,6 +92,8 @@ def media_type_of(content_type: str | None, data: bytes) -> str:
         return "image/png"
     if data[:3] == b"\xff\xd8\xff":
         return "image/jpeg"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
     declared = (content_type or "").split(";")[0].strip().lower()
     if declared in ("text/html", "application/xhtml+xml"):
         return "text/html"

@@ -32,6 +32,7 @@ CONVERTERS = {
     "text/html": "mdify.html",
     "image/png": "mdify.image",
     "image/jpeg": "mdify.image",
+    "image/webp": "mdify.image",
 }
 _warmed: set[str] = set()
 

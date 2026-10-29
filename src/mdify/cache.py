@@ -31,7 +31,7 @@ import pathlib
 import re
 import tempfile
 
-EXTENSIONS = {"application/pdf": "pdf", "text/html": "html", "image/png": "png", "image/jpeg": "jpg"}
+EXTENSIONS = {"application/pdf": "pdf", "text/html": "html", "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp"}
 
 
 def default_root() -> pathlib.Path:

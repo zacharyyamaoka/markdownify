@@ -18,7 +18,7 @@ import functools
 
 from .converters import Conversion, Source, SourceWord
 
-MEDIA_TYPES = ("image/png", "image/jpeg")
+MEDIA_TYPES = ("image/png", "image/jpeg", "image/webp")
 PIPELINE = "A"
 
 
