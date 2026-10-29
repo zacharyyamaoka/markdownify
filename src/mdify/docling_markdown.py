@@ -14,7 +14,9 @@ What it writes:
   docling's own row/col/span and its header `kind`;
 - pictures as `figure` blocks with `represented: false` and their box, and no markdown (CONTRACT §3.1): the words
   inside them are counted as flagged, not lost;
-- page headers and footers (docling's furniture layer) are left out and listed in `dropped`.
+- page headers and footers (docling's furniture layer) are left out and listed in `dropped`;
+- a block's or cell's words in the order the page prints them (`reading_order`: lines by their boxes, top to bottom,
+  left to right), when docling's text is exactly the source words inside its box in another order.
 
 Then every markdown word is aligned (mdify.align) to the source text units the caller supplies — pdfplumber words
 for a PDF, OCR lines for an image — block by block: a cell's words against the units inside the cell's box, a
@@ -24,6 +26,7 @@ paragraph's against the units inside its box, then whatever is left per page.
 from __future__ import annotations
 
 import bisect
+import collections
 import dataclasses
 import html
 import re
@@ -144,8 +147,14 @@ class _Writer:
 
 
 class _Serializer:
-    def __init__(self, document, fold: Callable[[str], str] | None):
+    def __init__(self, document, fold: Callable[[str], str] | None, units: list[SourceText] | None = None):
         self.document = document
+        self.units_by_page: dict[int, list[SourceText]] = {}
+        # Leaf block id → the source units its text was put in reading order from, in that order (see `_ground_words`).
+        self.unit_order: dict[str, list[SourceText]] = {}
+        self.pending_order: dict[int, list[SourceText]] = {}
+        for unit in units or []:
+            self.units_by_page.setdefault(unit.page, []).append(unit)
         self.fold = fold or (lambda text: text)
         self.writer = _Writer()
         self.blocks: list[dict] = []
@@ -181,13 +190,46 @@ class _Serializer:
         what the source says (CONTRACT §4.1; Zach: render stored text truthfully). `text` only when `orig` is empty
         (formulas without enrichment keep their PDF text in `orig`)."""
         raw = getattr(item, "orig", None) or getattr(item, "text", "") or ""
-        text = squash(self.fold(raw))
+        text = self.in_reading_order(squash(self.fold(raw)), self.groundings(item), item)
         if isinstance(item, ListItem) and not getattr(item, "enumerated", False):
             marker = (getattr(item, "marker", "") or "").strip()
             if marker in _BULLETS and text.startswith(marker):
                 # A bullet glyph becomes the markdown bullet: syntax, so its source glyph is dropped on purpose.
                 text = text[len(marker):].lstrip()
         return text
+
+    def in_reading_order(self, text: str, groundings: list[dict], owner) -> str:
+        """`text` with its words in the order the page shows them, when it is exactly the source words inside its
+        box in another order; otherwise `text` unchanged.
+
+        WHY: docling joins the lines of a block or cell in the order its OCR or text cells came, not the order they
+        are printed. JMC's servo list prints its headers on stacked lines ("Power" / "supply" / "voltage" / "(V)")
+        and the markdown said "voltage supply Power (V)", so the extractor's label check dropped correct values
+        (2026-10-29). Only a reordering of the source's own words is accepted: the markdown never says a word the
+        source does not."""
+        if len(groundings) != 1 or not text:
+            return text
+        grounding = groundings[0]
+        inside = [unit for unit in self.units_by_page.get(grounding["page"], []) if _inside(unit, grounding)]
+        if not inside or collections.Counter(text.split()) != collections.Counter(
+                word for unit in inside for word in unit.text.split()):
+            return text
+        ordered = reading_order(inside)
+        self.pending_order[id(owner)] = ordered
+        return " ".join(unit.text.strip() for unit in ordered)
+
+    def take_order(self, owner, block: dict) -> None:
+        ordered = self.pending_order.pop(id(owner), None)
+        if ordered is not None:
+            self.unit_order[block["id"]] = ordered
+
+    def cell_text(self, cell, page_no) -> str:
+        return self.in_reading_order(squash(self.fold(cell.text or "")), self.cell_grounding(cell, page_no), cell)
+
+    def cell_grounding(self, cell, page_no) -> list[dict]:
+        if cell.bbox is None or page_no is None:
+            return []
+        return [{"page": page_no, "box": rounded(self.normalized(cell.bbox, page_no))}]
 
     def begin_block(self, list_item: bool) -> None:
         if list_item and self.previous_was_list:
@@ -253,6 +295,10 @@ class _Serializer:
                  "grounding": self.groundings(item), "represented": True}
         self.blocks.append(block)
         self.leaves.append(block)
+        if kind == "code":
+            self.pending_order.pop(id(item), None)   # code is written from docling's text as is
+        else:
+            self.take_order(item, block)
 
     def list_prefix(self, item) -> str:
         depth = 0
@@ -320,14 +366,13 @@ class _Serializer:
             kind = "rowHeader"
         else:
             kind = "content"
-        grounding = []
-        if cell.bbox is not None and page_no is not None:
-            grounding = [{"page": page_no, "box": rounded(self.normalized(cell.bbox, page_no))}]
+        grounding = self.cell_grounding(cell, page_no)
         block = {"id": self.new_id("table_cell"), "type": "table_cell", "range": {"start": start, "end": end},
                  "row": cell.start_row_offset_idx, "col": cell.start_col_offset_idx, "rowspan": cell.row_span,
                  "colspan": cell.col_span, "kind": kind, "grounding": grounding}
         self.blocks.append(block)
         self.leaves.append(block)
+        self.take_order(cell, block)
         return block
 
     def gfm_table(self, cells, data, page_no, has_row_headers) -> list[dict]:
@@ -339,7 +384,7 @@ class _Serializer:
             for col in range(data.num_cols):
                 self.writer.write("| ")
                 cell = by_position.get((row, col))
-                text = escape_text(squash(self.fold(cell.text or "")), in_table=True) if cell else ""
+                text = escape_text(self.cell_text(cell, page_no), in_table=True) if cell else ""
                 start, end = self.writer.write(text)
                 if cell is not None:
                     blocks.append(self.cell_block(cell, page_no, has_row_headers, start, end))
@@ -354,7 +399,7 @@ class _Serializer:
         # cell); written row by row they shifted LRS-350's model names one column off their values.
         grid_cells = [GridCell(cell.start_row_offset_idx, cell.start_col_offset_idx, cell.row_span, cell.col_span,
                                bool(cell.column_header or cell.row_header),
-                               escape_html_text(squash(self.fold(cell.text or "")))) for cell in cells]
+                               escape_html_text(self.cell_text(cell, page_no))) for cell in cells]
         markup, ranges = html_table(grid_cells, data.num_rows, data.num_cols)
         offset, _ = self.writer.write(markup)
         return [self.cell_block(cell, page_no, has_row_headers, offset + start, offset + end)
@@ -365,14 +410,15 @@ class _Serializer:
 def serialize(document, units: list[SourceText], *, fold: Callable[[str], str] | None = None,
               pages: list[dict] | None = None, folded_note: str = "symbol_font") -> Conversion:
     """Markdown, blocks, words and dropped regions for `document`, with every word aligned to `units`."""
-    serializer = _Serializer(document, fold)
+    serializer = _Serializer(document, fold, units)
     serializer.run()
     markdown = serializer.writer.text() + "\n"
     if pages is None:
         pages = [{"page": page_no, "width": round(page.size.width, 2), "height": round(page.size.height, 2), "unit": "pt"}
                  for page_no, page in sorted(document.pages.items())]
     _cover_dropped_words(serializer.dropped, units)
-    words, joins = _ground_words(markdown, serializer.leaves, units, folded_note, serializer.dropped, pages)
+    words, joins = _ground_words(markdown, serializer.leaves, units, folded_note, serializer.dropped, pages,
+                                 serializer.unit_order)
     markdown = _glue(markdown, serializer.blocks, words, joins)
     return Conversion(markdown=markdown, blocks=serializer.blocks, words=words, dropped=serializer.dropped, pages=pages)
 
@@ -426,6 +472,25 @@ def _glue(markdown: str, blocks: list[dict], rows: list[dict], joins: list[int])
     return markdown
 
 
+def reading_order(units: list[SourceText]) -> list[SourceText]:
+    """Units as a reader reads them: grouped into lines by their boxes — one line when they overlap vertically by
+    at least half the shorter one's height, so a superscript stays on its line — lines top to bottom, units in a
+    line left to right."""
+    lines: list[tuple[list[float], list[SourceText]]] = []   # ([top, bottom], units)
+    for unit in sorted(units, key=lambda unit: (unit.box[1] + unit.box[3]) / 2):
+        top, bottom = unit.box[1], unit.box[3]
+        for extent, members in lines:
+            overlap = min(bottom, extent[1]) - max(top, extent[0])
+            if overlap >= 0.5 * min(bottom - top, extent[1] - extent[0]):
+                members.append(unit)
+                extent[0], extent[1] = min(top, extent[0]), max(bottom, extent[1])
+                break
+        else:
+            lines.append(([top, bottom], [unit]))
+    lines.sort(key=lambda line: line[0][0])
+    return [unit for _extent, members in lines for unit in sorted(members, key=lambda unit: unit.box[0])]
+
+
 def _inside(unit: SourceText, grounding: dict) -> bool:
     if unit.page != grounding["page"]:
         return False
@@ -436,8 +501,15 @@ def _inside(unit: SourceText, grounding: dict) -> bool:
 
 
 def _ground_words(markdown: str, leaves: list[dict], units: list[SourceText], folded_note: str,
-                  dropped: list[dict], pages: list[dict]) -> tuple[list[dict], list[int]]:
-    """Word rows, and the indices i where word i and word i+1 should be one word (see `_glue`)."""
+                  dropped: list[dict], pages: list[dict],
+                  unit_order: dict[str, list[SourceText]] | None = None) -> tuple[list[dict], list[int]]:
+    """Word rows, and the indices i where word i and word i+1 should be one word (see `_glue`).
+
+    A leaf whose text the serializer put in reading order offers its units to the aligner in that same order.
+    WHY: the aligner pairs the two sequences in order; offered in OCR order, JMC's "2500:" line was pinned to the
+    "2500C:" line printed below it, and the other way round."""
+    unit_index = {id(unit): j for j, unit in enumerate(units)}
+    unit_order = unit_order or {}
     words = align.markdown_words(markdown)
     starts = [word.start for word in words]
 
@@ -455,6 +527,8 @@ def _ground_words(markdown: str, leaves: list[dict], units: list[SourceText], fo
         by_page.setdefault(unit.page, []).append(index)
 
     def candidates(leaf: dict) -> list[int]:
+        if leaf["id"] in unit_order:
+            return [unit_index[id(unit)] for unit in unit_order[leaf["id"]]]
         found = []
         for grounding in leaf.get("grounding", []):
             found.extend(j for j in by_page.get(grounding["page"], []) if _inside(units[j], grounding))

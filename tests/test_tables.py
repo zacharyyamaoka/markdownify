@@ -119,3 +119,99 @@ def test_markdown_tables_reads_html_and_gfm_and_skips_code():
     assert gfm.kind == "gfm" and [len(covered) for covered in gfm.covered] == [3, 3, 2]
     assert html.kind == "html" and html.covered == [{0, 1}, {0, 1, 2}]
     assert column_of(html, "y") == 1
+
+
+# --- reading order of a cell's words (JMC servo selection list, OCR path, 2026-10-29) ---------------------------
+# The image prints each header on stacked lines; docling's OCR path joined the lines out of order ("voltage supply
+# Power (V)"), and the extractor's label check then dropped correct values.
+JMC_LINES = [("Power", (0.62, 0.106, 0.65, 0.121)), ("supply", (0.62, 0.119, 0.65, 0.137)),
+             ("voltage", (0.62, 0.133, 0.65, 0.150)), ("(V)", (0.63, 0.146, 0.645, 0.164))]
+
+
+def jmc_document(cell_text: str, paragraph_text: str):
+    from docling_core.types.doc import (BoundingBox, CoordOrigin, DocItemLabel, DoclingDocument, ProvenanceItem,
+                                        Size)
+
+    document = DoclingDocument(name="jmc")
+    document.add_page(page_no=1, size=Size(width=1000, height=1000))
+
+    def box(x0, y0, x1, y1):
+        return BoundingBox(l=x0 * 1000, t=y0 * 1000, r=x1 * 1000, b=y1 * 1000, coord_origin=CoordOrigin.TOPLEFT)
+
+    cell = TableCell(text=cell_text, bbox=box(0.62, 0.105, 0.655, 0.165), start_row_offset_idx=0,
+                     end_row_offset_idx=1, start_col_offset_idx=0, end_col_offset_idx=1, column_header=True)
+    document.add_table(data=TableData(table_cells=[cell], num_rows=1, num_cols=1),
+                       prov=ProvenanceItem(page_no=1, bbox=box(0.6, 0.1, 0.7, 0.2), charspan=(0, 0)))
+    document.add_text(label=DocItemLabel.TEXT, text=paragraph_text, orig=paragraph_text,
+                      prov=ProvenanceItem(page_no=1, bbox=box(0.1, 0.3, 0.5, 0.36), charspan=(0, 0)))
+    return document
+
+
+def jmc_units():
+    from mdify.docling_markdown import SourceText
+
+    units = [SourceText(text=text, raw=text, page=1, box=box) for text, box in JMC_LINES]
+    # Two lines of a paragraph, the second line's words read first by the converter.
+    units += [SourceText(text="Rated torque", raw="Rated torque", page=1, box=(0.1, 0.30, 0.4, 0.32)),
+              SourceText(text="at 24 V.", raw="at 24 V.", page=1, box=(0.1, 0.33, 0.3, 0.35))]
+    return units
+
+
+def test_cell_and_block_text_is_in_visual_reading_order():
+    from mdify.docling_markdown import serialize
+
+    units = jmc_units()
+    conversion = serialize(jmc_document("voltage supply Power (V)", "at 24 V. Rated torque"), units, pages=[
+        {"page": 1, "width": 1000, "height": 1000, "unit": "px"}])
+    markdown = conversion.markdown
+    [cell] = [block for block in conversion.blocks if block["type"] == "table_cell"]
+    assert markdown[cell["range"]["start"]:cell["range"]["end"]] == "Power supply voltage (V)"
+    assert "Rated torque at 24 V." in markdown
+    # Every word keeps the box of the source line it came from.
+    for word in conversion.words:
+        text = markdown[word["range"]["start"]:word["range"]["end"]]
+        source = next(unit for unit in units if text in unit.text.split())
+        assert word["grounding"]["box"][1] == pytest.approx(source.box[1], abs=1e-4), text
+        assert word["score"] == 1.0
+
+
+def test_reading_order_keeps_the_converters_text_when_it_is_not_a_reordering_of_the_source():
+    from mdify.docling_markdown import serialize
+
+    # "Supply" is not a source word: the text is not just the source's lines reordered, so it is left alone.
+    conversion = serialize(jmc_document("voltage Supply Power (V)", "Rated torque at 24 V."), jmc_units(), pages=[
+        {"page": 1, "width": 1000, "height": 1000, "unit": "px"}])
+    assert "| voltage Supply Power (V) |" in conversion.markdown
+    assert "Rated torque at 24 V." in conversion.markdown
+
+
+def test_words_of_a_reordered_cell_keep_their_own_lines_box():
+    # JMC's encoder cell: OCR returned the "2500C:" line before the "2500:" line printed above it. Aligned in OCR
+    # order, each word was pinned to the other line (score 0.83).
+    from docling_core.types.doc import BoundingBox, CoordOrigin, DoclingDocument, ProvenanceItem, Size
+
+    from mdify.docling_markdown import SourceText, serialize
+
+    lines = [("1024C: 1024 lines magnetic encoder;", 0.757), ("2500C: 2500 lines magnetic encoder", 0.789),
+             ("2500: 2500 lines optical encoder;", 0.773)]                       # OCR order, not printed order
+    units = [SourceText(text=text, raw=text, page=1, box=(0.18, top, 0.32, top + 0.016)) for text, top in lines]
+    document = DoclingDocument(name="encoder")
+    document.add_page(page_no=1, size=Size(width=1000, height=1000))
+    cell = TableCell(text=" ".join(text for text, _top in lines), start_row_offset_idx=0, end_row_offset_idx=1,
+                     start_col_offset_idx=0, end_col_offset_idx=1,
+                     bbox=BoundingBox(l=170, t=750, r=330, b=810, coord_origin=CoordOrigin.TOPLEFT))
+    document.add_table(data=TableData(table_cells=[cell], num_rows=1, num_cols=1),
+                       prov=ProvenanceItem(page_no=1, bbox=BoundingBox(l=100, t=700, r=400, b=900,
+                                                                       coord_origin=CoordOrigin.TOPLEFT),
+                                           charspan=(0, 0)))
+    conversion = serialize(document, units, pages=[{"page": 1, "width": 1000, "height": 1000, "unit": "px"}])
+    assert ("| 1024C: 1024 lines magnetic encoder; 2500: 2500 lines optical encoder; "
+            "2500C: 2500 lines magnetic encoder |") in conversion.markdown
+    markdown = conversion.markdown
+    for word in conversion.words:
+        text = markdown[word["range"]["start"]:word["range"]["end"]]
+        assert word["score"] == 1.0, text
+        if text in ("2500:", "optical"):
+            assert word["grounding"]["box"][1] == pytest.approx(0.773, abs=1e-4), text
+        if text in ("2500C:",):
+            assert word["grounding"]["box"][1] == pytest.approx(0.789, abs=1e-4), text
