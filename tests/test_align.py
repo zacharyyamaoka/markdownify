@@ -115,3 +115,8 @@ def test_word_missed_by_its_block_is_found_in_the_second_pass():
 def test_a_source_word_is_claimed_once():
     alignments = align_word_spans(["Nm", "Nm"], ["Nm"], groups=[([0], [0]), ([1], [0])])
     assert alignments[0].index == 0 and alignments[1].index is None
+
+
+def test_escaped_ampersand_keeps_entity_text_literal():
+    assert texts(r"Use \&amp; here") == ["Use", "&amp;", "here"]
+    assert texts("Use &amp; here") == ["Use", "&", "here"]

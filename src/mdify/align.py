@@ -196,12 +196,32 @@ def _word(markdown: str, mask: bytes, start: int, end: int) -> MarkdownWord:
     return MarkdownWord(start, end, word_text(markdown, start, end, mask))
 
 
+_ENTITY = re.compile(r"&(#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});")
+
+
 def word_text(markdown: str, start: int, end: int, mask: bytes | None = None) -> str:
     """The content characters of markdown[start:end], with HTML entities decoded (`&amp;` in a raw-HTML cell is
-    the source's `&`)."""
+    the source's `&`) unless their `&` was escaped (`\\&amp;` is the literal text "&amp;")."""
     mask = mask if mask is not None else content_mask(markdown)
     raw = "".join(markdown[position] for position in range(start, end) if mask[position] == CONTENT)
-    return html.unescape(raw) if "&" in raw else raw
+    if "&" not in raw:
+        return raw
+    segment = markdown[start:end]
+    pieces = []
+    position = start
+    for match in _ENTITY.finditer(segment):
+        absolute = start + match.start()
+        if absolute > 0 and markdown[absolute - 1] == "\\" and mask[absolute - 1] == SYNTAX:
+            continue  # an escaped ampersand: the entity is literal text
+        pieces.append(_content(markdown, mask, position, absolute))
+        pieces.append(html.unescape(match.group(0)))
+        position = start + match.end()
+    pieces.append(_content(markdown, mask, position, end))
+    return "".join(pieces)
+
+
+def _content(markdown: str, mask: bytes, start: int, end: int) -> str:
+    return "".join(markdown[position] for position in range(start, end) if mask[position] == CONTENT)
 
 
 def word_ranges_of(markdown: str) -> list[tuple[int, int]]:
@@ -253,13 +273,14 @@ _MAX_CHARACTER_CELLS = 400_000_000
 
 def align_word_spans(markdown_texts: list[str], source_texts: list[str], *,
                      groups: list[tuple[list[int], list[int]]] | None = None,
-                     min_score: float = 0.5) -> list[WordAlignment]:
+                     min_score: float = 0.5, residual: bool = True) -> list[WordAlignment]:
     """Align markdown words to source words (both as lists of their text).
 
     `groups` = [(markdown word indices, source word indices)], one per block whose source words are known: each is
     aligned on its own, in order, and a source word claimed by one group is not offered to the next. Whatever is
     still unaligned afterwards is aligned once more against the source words nobody claimed, so a block whose box
-    missed a word still finds it.
+    missed a word still finds it. Pass `residual=False` to skip that global pass (a converter that adds its own
+    per-page leftover groups, so a word never finds a twin on another page).
     """
     results: list[WordAlignment] = [UNALIGNED] * len(markdown_texts)
     markdown_normal = [normalize_with_origin(text) for text in markdown_texts]
@@ -277,7 +298,8 @@ def align_word_spans(markdown_texts: list[str], source_texts: list[str], *,
 
     for markdown_indices, source_indices in groups or []:
         run(list(markdown_indices), list(source_indices))
-    run(list(range(len(markdown_texts))), list(range(len(source_texts))))
+    if residual:
+        run(list(range(len(markdown_texts))), list(range(len(source_texts))))
     return results
 
 
