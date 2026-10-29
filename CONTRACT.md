@@ -197,6 +197,38 @@ plus an optional `model` (the part number to pick in a table with one column per
   column header (the model) from the index.
 - Option 2 has no index, so the model must give `grounding` itself; the same checker tests it against the text layer.
 - A value that fails a check is written with `verdict: "dropped"` and its reasons, never silently.
+- Every value carries `"id": "<key>@<cite id>"` (or `"<key>@p<page>"` without a cite), stable for that file, so a
+  human edit can point at it.
+
+### 7.1 Human review layer (`review.json`, draft 2026-10-29)
+
+`values.json` is the AI's record and is never rewritten. A person's review is a separate, append-only list of
+operations beside it; the record anyone reads is `values.json` with `review.json` applied — Google Docs' suggestion
+mode, where the original text stays visible under the edits.
+WHY (Zach, 2026-10-29): "it should kinda look like a google doc edit mode, where if you make edits its very clear
+what was AI and what you have added on top of it"; "If I don't fix it you can assume I accepted it … cross it out it
+means reject it. Still though you can keep the base thing there."
+
+```jsonc
+{"schema": "extractor/review@0", "values_sha256": "…",          // the values.json this review applies to
+ "ops": [
+  {"op": "edit",   "value_id": "rated_power@table_cell-44", "field": "value", "from": 350.4, "to": 350,
+   "author": "zach", "at": "2026-10-29T22:10:00Z", "note": "rounded per sales sheet"},
+  {"op": "reject", "value_id": "voltage_tolerance@table_cell-61", "author": "zach", "at": "…"},
+  {"op": "restore","value_id": "voltage_tolerance@table_cell-61", "author": "zach", "at": "…"},
+  {"op": "add",    "row": {"id": "h1", "key": "mass_g", "value": 750, "unit": "g", "raw": null, "grounding": null},
+   "author": "zach", "at": "…", "note": "weighed on the bench"},
+  {"op": "assign", "products": ["meanwell-lrs-350-24", "meanwell-lrs-350-48"], "value_ids": ["*"],
+   "author": "zach", "at": "…"}]}
+```
+
+- **Accepted** is the default: a value with no op stands as the AI wrote it.
+- **Rejected** values stay in the record, shown struck through; `restore` undoes it.
+- **Human rows** (`add`) are human-entered: `grounding` may be a Location the person drew on the source, or `null`
+  ("no source cited") — never a borrowed AI grounding.
+- **Products:** one datasheet can serve many products. `assign` maps value ids (`"*"` = all) to product ids; a value
+  that differs per product (a column per model) is assigned to that product only.
+- Ops are applied in order; the last op on a value wins; nothing is deleted.
 
 ## 8. RobotParts seam
 
