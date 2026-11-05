@@ -12,7 +12,12 @@ also the ones about to be thrown away — the size printed is the size of this p
 | html     | source.html                   | the main document's bytes exactly as delivered             |
 | snapshot | snapshot.jpg + snapshot.json  | the full page as a JPEG + every visible word's box on it   |
 | pdf      | snapshot.pdf                  | the browser's print of the page, with a text layer          |
+| single   | single.html                   | the rendered page as one self-contained HTML file (SingleFile) |
 | archive  | source.wacz                   | every response of the visit, replayable offline            |
+
+The exception to "built on every run" is `single`: SingleFile drives a browser of its own, so it is a second visit to
+the site, made only when `single` is kept or on --dry-sizes (`mdify.capture_single` says why). Otherwise its row reads
+"not built".
 
 Default `--keep`: html,snapshot. CONTRACT §2.1's policy — `html` always, `snapshot` + `archive` for every page a kept
 value cites, `html` only for bulk scraping — is the caller's, who knows which pages a value cites; the command can't.
@@ -33,18 +38,19 @@ import shutil
 import sys
 import tempfile
 
-from . import capture_archive, capture_snapshot
+from . import capture_archive, capture_single, capture_snapshot
 from .cache import Cache, display_path, sha256_bytes, write_json
 from .converters import Source
 from .fetch import FetchError, Fetcher, media_type_of
 
-LEVELS = ("link", "html", "snapshot", "pdf", "archive")
+LEVELS = ("link", "html", "snapshot", "pdf", "single", "archive")
 DEFAULT_KEEP = ("html", "snapshot")
 LEVEL_FILES = {
     "link": ("source.json",),
     "html": ("source.html",),
     "snapshot": (capture_snapshot.IMAGE_NAME, capture_snapshot.WORDS_NAME),
     "pdf": ("snapshot.pdf",),
+    "single": (capture_single.FILE_NAME,),
     "archive": ("source.wacz",),
 }
 # A page whose rendered text has this many times the delivered HTML's visible words was built by its scripts.
@@ -55,7 +61,7 @@ JS_BUILT_RATIO = 2.0
 class Level:
     name: str
     files: tuple[str, ...]
-    bytes: int
+    bytes: int | None                   # None: not built this run (`single` when neither kept nor --dry-sizes)
     note: str = ""
 
 
@@ -122,6 +128,11 @@ def capture(url: str, keep: tuple[str, ...] = DEFAULT_KEEP, out: pathlib.Path | 
             warnings.append(f"{len(unread)} responses are not archived: the browser no longer had their bodies "
                             f"(e.g. {unread[0]})")
         archive_check = capture_archive.verify(staging / "source.wacz", visit.main_body, visit.final_url, expected)
+        single = None
+        if "single" in keep or dry_sizes:
+            single = capture_single.save(visit.final_url, staging / capture_single.FILE_NAME, fetcher,
+                                         user_agent=visit.user_agent, log=log)
+            warnings += [f"SingleFile: {line}" for line in single.warnings]
 
         delivered = len(html.visible_page(Source(path=staging / "source.html", sha256=sha256, media_type=media_type,
                                                  url=url)).words)
@@ -132,12 +143,15 @@ def capture(url: str, keep: tuple[str, ...] = DEFAULT_KEEP, out: pathlib.Path | 
                             f"the archive keep what the scripts built)")
 
         sizes = {name: sum((staging / file).stat().st_size for file in LEVEL_FILES[name] if (staging / file).exists())
-                 for name in LEVELS if name != "link"}
+                 for name in LEVELS if name != "link" and (name != "single" or single is not None)}
         retrieval = {"url": url, "final_url": visit.final_url, "retrieved_at": visit.retrieved_at,
                      "http_status": visit.status, "content_type": visit.content_type, "user_agent": visit.user_agent,
                      "capture": {"browser": visit.browser, "requests": visit.requests, "responses": responses,
                                  "failed": len(visit.failed), "blocked": len(visit.blocked), "kept": list(keep),
                                  "sizes": dict(sizes), "rendered_words": rendered, "delivered_words": delivered}}
+        if single is not None:
+            retrieval["capture"]["single"] = {"tool": f"single-file-cli {single.version}",
+                                              "seconds": round(single.seconds, 1)}
         record = {"sha256": sha256, "bytes": len(visit.main_body), "media_type": media_type, "retrievals": [retrieval]}
         write_json(staging / "source.json", record)
         sizes["link"] = (staging / "source.json").stat().st_size
@@ -149,6 +163,9 @@ def capture(url: str, keep: tuple[str, ...] = DEFAULT_KEEP, out: pathlib.Path | 
             Level("snapshot", LEVEL_FILES["snapshot"], sizes["snapshot"],
                   f"{words['width']}×{words['height']} px, {len(words['words'])} words boxed"),
             Level("pdf", LEVEL_FILES["pdf"], sizes["pdf"]),
+            Level("single", LEVEL_FILES["single"], sizes.get("single"),
+                  f"SingleFile, a second visit ({single.seconds:.0f} s)" if single
+                  else "a second visit; --keep single builds it"),
             Level("archive", LEVEL_FILES["archive"], sizes["archive"],
                   f"{responses} responses, {human(sum(len(e.body) for e in visit.exchanges))} of bodies"),
         ]
@@ -203,14 +220,17 @@ def size_table(captured: Captured, dry_sizes: bool) -> str:
     """The menu: every level's files and measured size, and whether this run kept it."""
     rows = [("level", "files", "bytes", "size", "", "kept")]
     for level in captured.levels:
+        if level.bytes is None:
+            rows.append((level.name, " + ".join(level.files), "", "—", level.note, "not built"))
+            continue
         kept = "dry run" if dry_sizes else ("kept" if level.name in captured.kept else "deleted")
         rows.append((level.name, " + ".join(level.files), str(level.bytes), human(level.bytes), level.note, kept))
-    kept_total = sum(level.bytes for level in captured.levels if level.name in captured.kept)
-    every = sum(level.bytes for level in captured.levels)
+    kept_total = sum(level.bytes for level in captured.levels if level.name in captured.kept and level.bytes)
+    every = sum(level.bytes for level in captured.levels if level.bytes)
     widths = [max(len(row[column]) for row in rows) for column in range(len(rows[0]))]
     lines = ["  ".join(cell.rjust(widths[column]) if column in (2, 3) else cell.ljust(widths[column])
                        for column, cell in enumerate(row)).rstrip() for row in rows]
-    lines.append(f"every level {human(every)}; " + ("nothing kept (--dry-sizes)" if dry_sizes
+    lines.append(f"every level built {human(every)}; " + ("nothing kept (--dry-sizes)" if dry_sizes
                                                     else f"kept {', '.join(captured.kept)}: {human(kept_total)}"))
     return "\n".join(lines)
 

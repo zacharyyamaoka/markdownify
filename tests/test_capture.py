@@ -157,6 +157,33 @@ def test_archive_replays_offline(captured, site):
     assert replayed["changed_share"] < 0.001, replayed
 
 
+def test_single_renders_offline_from_one_file(captured):
+    """The `single` level: SingleFile's second visit, saved as one HTML file that renders with every request off."""
+    from playwright.sync_api import sync_playwright
+
+    result, out, _cache = captured
+    single = next(level for level in result.levels if level.name == "single")
+    assert single.bytes == (out / "single.html").stat().st_size > len(PAGE)
+    record = json.loads((out / "source.json").read_text())
+    assert record["retrievals"][-1]["capture"]["single"]["tool"].startswith("single-file-cli ")
+    requests = []
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        context = browser.new_context(viewport={"width": 1280, "height": 800})
+        context.route("**/*", lambda route, request: (requests.append(request.url), route.abort())
+                      if not request.url.startswith(("file:", "data:")) else route.continue_())
+        page = context.new_page()
+        page.goto((out / "single.html").as_uri())
+        text = page.inner_text("body")
+        margin = page.evaluate("getComputedStyle(document.body).marginLeft")
+        image = page.evaluate("[...document.images].map(i => [i.src.slice(0, 15), i.naturalWidth])")
+        browser.close()
+    assert requests == []
+    assert "Rated torque" in text and "Peak torque" in text
+    assert margin == "24px"                                  # /style.css, inlined
+    assert image == [["data:image/png;", 2]]                 # /pic.png, inlined
+
+
 def test_snapshot_boxes_sit_inside_the_browsers_element_boxes(captured):
     """Oracle: the browser's own getBoundingClientRect of each table cell, from a separate page load."""
     from playwright.sync_api import sync_playwright
@@ -222,7 +249,10 @@ def test_keep_html_only_deletes_the_rest(site, tmp_path):
     result = capture.capture(f"{site}/page", ("html",), cache=cache)
     files = {path.name for path in result.directory.iterdir()}
     assert {"source.html", "source.json", "document.md", "index.json"} <= files
-    assert not files & {"snapshot.jpg", "snapshot.json", "snapshot.pdf", "source.wacz"}
+    assert not files & {"snapshot.jpg", "snapshot.json", "snapshot.pdf", "single.html", "source.wacz"}
+    single = next(level for level in result.levels if level.name == "single")
+    assert single.bytes is None                              # a second visit, made only when kept
+    assert "not built" in capture.size_table(result, dry_sizes=False)
     index = json.loads((result.directory / "index.json").read_text())
     assert not any("snapshot" in (word.get("grounding") or {}) for word in index["words"])
 
