@@ -33,7 +33,7 @@ Measured on the harness, words correctly placed: A pdf 0.982 / png 0.893; AB pdf
 ## Web capture: `mdify capture`
 
 ```
-mdify capture <url> [--keep link,html,snapshot,pdf,archive] [--out DIR] [--dry-sizes]
+mdify capture <url> [--keep link,html,snapshot,pdf,single,archive] [--out DIR] [--dry-sizes]
 ```
 
 One headless-Chromium visit builds every capture level (CONTRACT §2.1), prints each one's measured size, keeps the
@@ -47,6 +47,7 @@ options and then provide the estimate of the storage size, so then the user can 
 | `html` | `source.html` | the main document's body exactly as delivered (the bytes values cite) |
 | `snapshot` | `snapshot.jpg` + `snapshot.json` | the full page (JPEG q80, 1280 px wide) and every visible word's box on it |
 | `pdf` | `snapshot.pdf` | the browser's print of the page |
+| `single` | `single.html` | the rendered page as one self-contained HTML file (SingleFile): CSS, images and fonts inlined, scripts removed, every fetch blocked; opens offline from the file alone |
 | `archive` | `source.wacz` | every response of the visit as WARC records in a WACZ; replays offline (ReplayWeb.page) |
 
 - **Default `--keep html,snapshot`.** CONTRACT §2.1's policy — `html` always, `snapshot` + `archive` for every page a
@@ -54,6 +55,13 @@ options and then provide the estimate of the storage size, so then the user can 
   cites. RobotParts, which stores the captured copy "for traceability", should pass `--keep html,snapshot,archive`
   for a page it cites.
 - **`--dry-sizes`** visits and measures, keeps nothing.
+- **`single` is a second visit.** SingleFile (`single-file-cli`, pinned in `tools/singlefile/`; install once with
+  `pnpm --dir tools/singlefile install`) drives a browser of its own, so it runs only when `single` is kept or for
+  `--dry-sizes`; otherwise its row says "not built". It goes through the same gate as the page (refused hosts,
+  robots.txt, one request per second per host) and blocks refused hosts inside the page, but can't re-check robots.txt
+  for a frame or redirect. It is a display copy: the converter keeps reading `source.html`. WHY not the converter's
+  input: SingleFile inlines every image as a `data:` URI, and the converter's markdown diff is quadratic in them
+  (docs/research/2026-11-05-capture-trial.md).
 - **Politeness:** the page URL passes the fetcher's gate first (refused hosts, robots.txt, one request per second per
   host); every document navigation inside the visit is re-checked against robots.txt. The page's own CSS, JS and
   images load as they would for any reader. The visit's request count is logged and stored in `source.json`.
@@ -64,6 +72,9 @@ options and then provide the estimate of the storage size, so then the user can 
 - **Checking:** `mdify check` also tests each word's snapshot box: the words measured under the box must contain the
   word. `mdify.capture_replay.replay(<bundle>)` reloads the page from `source.wacz` alone, with the network blocked,
   and returns its pixel difference from `snapshot.jpg`.
+- **Opening the archive:** `mdify view <bundle>` shows a "Full archive" button when `source.wacz` was kept. It opens
+  the archive in a new tab in ReplayWeb.page (2.5.4, vendored unmodified in `viewer/vendor/replaywebpage/`) at the
+  captured URL and time, with no network. It is for browsing the whole capture; highlights stay on the left pane.
 
 Measured 2026-10-29 (1280 px viewport):
 
@@ -73,6 +84,13 @@ Measured 2026-10-29 (1280 px viewport):
 | ZeroErr eRob80 | 84 KB | 1.2 MB | 6.9 MB | 7.3 MB (117 responses) | same size, 0.08 % pixels changed |
 | moteus hardware reference | 45 KB | 164 KB | 95 KB | 285 KB (18 responses) | identical |
 
+`single`, measured 2026-11-05 (opened offline: no request leaves the file; pixel difference from that day's snapshot,
+which is a different visit): CubeMars 3.6 MB in 72 s (15 % — the video gallery stays in its first state), eRob80
+7.6 MB in 35 s (6.7 %), moteus 160 KB in 8 s (identical).
+
+Scoop (Harvard LIL) was trialled as the engine under the `archive` level on the same pages and not adopted: it
+recorded fewer of eRob80's responses, replayed CubeMars a little worse and keeps no robots.txt gate
+(docs/research/2026-11-05-capture-trial.md has the numbers).
 ## The viewer: `mdify view`
 
 ```

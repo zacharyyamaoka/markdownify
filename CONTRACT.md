@@ -40,7 +40,8 @@ link against the exact bytes after the worktree that made it is gone (the same r
 ### 2.1 Capture levels (web pages)
 
 A URL is captured in one browser visit; the caller picks what to keep. `mdify capture <url> --keep html,snapshot,archive`
-prints each level's measured size, keeps the chosen ones and discards the rest.
+prints each level's measured size, keeps the chosen ones and discards the rest. `single` alone is a second visit
+(SingleFile's own browser), made only when it is kept or for `--dry-sizes`.
 WHY a menu with sizes (Zach, 2026-10-29): "it's not either or. we should just provide all the options and then provide
 the estimate of the storage size, so then the user can pick."
 
@@ -50,6 +51,7 @@ the estimate of the storage size, so then the user can pick."
 | `html` | `source.html` | 192 KB (39 KB gzipped) | the bytes Markdownify reads and values cite |
 | `snapshot` | `snapshot.jpg` + every word's box at capture | 1.4 MB | what the page looked like; highlight as page + box |
 | `pdf` | `snapshot.pdf` | 5.2 MB | a printable copy with a text layer |
+| `single` | `single.html` (SingleFile: the rendered page with its CSS, images and fonts inlined, scripts removed) | 3.6 MB (2026-11-05; eRob80 7.6 MB, moteus 160 KB) | the page as rendered, offline from one file; a display copy, never cited |
 | `archive` | `source.wacz` (every response the browser got: HTML, CSS, JS, images, fonts) | 4.9 MB for a site's first page, 2.1–2.7 MB for each further page (shared files stored once) | the page replayed offline, exactly as delivered |
 
 - **Default:** `html` always; `snapshot` + `archive` for every page a kept value cites; bulk scraping keeps `html` only.

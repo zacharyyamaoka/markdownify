@@ -1,0 +1,3 @@
+allowBuilds:
+  '@harvard-lil/scoop': false
+  '@playwright/browser-chromium': false
