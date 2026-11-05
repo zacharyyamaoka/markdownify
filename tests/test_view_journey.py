@@ -327,6 +327,21 @@ def reload(page) -> None:
     page.wait_for_timeout(300)
 
 
+@pytest.mark.parametrize("bundle", [LRS, TPS, CUBEMARS], ids=["clean", "lost-and-unlinked", "lost-only"])
+def test_kpi_text_never_says_null_or_undefined(browser, bundle):
+    """WHY: the headline's missing parts went into replaceChildren as null, which writes the text "null" —
+    CubeMars (27 lost, 0 unlinked) read "27 lostnull"."""
+    viewer, context, page, errors = open_view(browser, bundle)
+    try:
+        for test_id in ("kpi-headline", "kpi-detail"):
+            text = page.locator(f'[data-testid="{test_id}"]').inner_text()
+            assert "null" not in text and "undefined" not in text, f"{test_id}: {text!r}"
+        assert errors == [], errors
+    finally:
+        context.close()
+        viewer.stop()
+
+
 def test_drag_source_boundary_and_it_survives_a_reload(lrs):
     page = lrs["page"]
     before = width_of(page, "source-pane")

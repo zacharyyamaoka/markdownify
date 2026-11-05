@@ -52,11 +52,12 @@ function headline(kpis) {
   const unlinked = kpis.unlinked;
   const clean = (lost ?? 0) === 0 && (unlinked ?? 0) === 0 && (kpis.coverage === null || kpis.coverage === 1) && kpis.traceability === 1;
   if (clean) return [`Every word accounted for${kpis.coverage === null ? " (no source inventory for this kind of file)" : ""}`];
+  // WHY the filter: replaceChildren writes a null as the text "null" ("27 lostnull"); element() filters its own.
   return [
     `${percent(kpis.coverage)} coverage · ${percent(kpis.traceability)} traceable`,
     lost ? element("span", { className: "warn" }, ` · ${count(lost)} lost`) : null,
     unlinked ? element("span", { className: "warn" }, ` · ${count(unlinked)} unlinked`) : null,
-  ];
+  ].filter((part) => part !== null);
 }
 
 function kpi(testId, label, value, warn) {
