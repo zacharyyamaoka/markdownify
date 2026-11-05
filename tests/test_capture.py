@@ -291,3 +291,11 @@ def test_cli_prints_the_size_table(site, tmp_path, monkeypatch, capsys):
     assert "level" in output and "archive check PASS" in output and "nothing kept (--dry-sizes)" in output
     for name in capture.LEVELS:
         assert f"\n{name}" in output
+
+
+def test_cli_help_says_when_single_makes_a_second_visit(capsys):
+    with pytest.raises(SystemExit):
+        cli.main(["capture", "--help"])
+    help_text = " ".join(capsys.readouterr().out.split())
+    assert "single" in help_text and "second visit" in help_text, help_text
+    assert "--dry-sizes" in help_text.split("second visit", 1)[1][:200], help_text

@@ -1,5 +1,6 @@
 """`mdify <path-or-url>… [--pipeline A|B|AB] [--model claude|codex] [--out DIR] [--reader]` writes a bundle per source; `mdify check <bundle>…` re-derives its invariants;
-`mdify capture <url> [--keep …] [--out DIR] [--dry-sizes]` captures a web page in one browser visit (CONTRACT §2.1);
+`mdify capture <url> [--keep …] [--out DIR] [--dry-sizes]` captures a web page in one browser visit, plus a second one
+for `single` when it is kept or on --dry-sizes (CONTRACT §2.1);
 `mdify view <source-or-bundle> [--port N] [--pipeline A|B|AB]` serves Markdownify's own page for one bundle.
 
 Several sources in one run share the loaded models, so the first conversion is timed cold and the rest warm
@@ -103,15 +104,18 @@ def _capture(argv: list[str]) -> int:
 
     parser = argparse.ArgumentParser(prog="mdify capture", description="Capture a web page in one browser visit: "
                                      "every level is built and its size printed, the chosen ones are kept and the "
-                                     "rest deleted (CONTRACT §2.1). Then the HTML is converted as `mdify <url>` "
-                                     "would, with each word's box on the snapshot when the snapshot is kept.")
+                                     "rest deleted (CONTRACT §2.1). The one exception is single: SingleFile drives "
+                                     "its own browser, a second visit to the site, made only when single is kept or "
+                                     "on --dry-sizes. Then the HTML is converted as `mdify <url>` would, with each "
+                                     "word's box on the snapshot when the snapshot is kept.")
     parser.add_argument("url", help="an http(s) web page")
     parser.add_argument("--keep", default=",".join(DEFAULT_KEEP),
                         help=f"comma-separated levels to keep, of {', '.join(LEVELS)} (default: %(default)s; "
                         "link — source.json — is always kept)")
     parser.add_argument("--out", type=pathlib.Path, help="write the kept levels and the bundle here instead of the "
                         "cache (~/.cache/markdownify/bundles/<sha256>/)")
-    parser.add_argument("--dry-sizes", action="store_true", help="keep nothing: visit, measure and print the sizes")
+    parser.add_argument("--dry-sizes", action="store_true", help="keep nothing: visit, measure and print the sizes "
+                        "(single included, so this makes the second visit too)")
     arguments = parser.parse_args(argv)
 
     from . import bundle, capture
