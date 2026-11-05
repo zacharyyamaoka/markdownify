@@ -229,6 +229,9 @@ means reject it. Still though you can keep the base thing there."
 - **Products:** one datasheet can serve many products. `assign` maps value ids (`"*"` = all) to product ids; a value
   that differs per product (a column per model) is assigned to that product only. `unassign` (same shape) removes
   that mapping again — both stay in the log.
+- **Models → products:** `{"op": "map", "model": "LRS-350-24", "product": "meanwell-lrs-350-24"}` records that a
+  model the datasheet prints is one of your products (`"product": null` unmaps). Values read for that model (their
+  column or row) are assigned to that product by default; explicit `assign`/`unassign` ops still win.
 - Ops are applied in order; the last op on a value wins; nothing is deleted.
 
 ## 8. RobotParts seam
