@@ -121,6 +121,39 @@ def test_markdown_tables_reads_html_and_gfm_and_skips_code():
     assert column_of(html, "y") == 1
 
 
+def nested_erob80(third_row: str) -> tuple[str, list[dict], dict]:
+    """eRob80's shape (zeroerr.cn, 2026-11-05): a 2-column table Defuddle wrote as text, one of whose cells holds a
+    3-column GFM table; that table's indexed range starts inside its opening "| ", two characters in."""
+    markdown = ("eRob\n- prefix\nE\n- interface\n\n"
+                "| 协议 | E | C |\n| --- | --- | --- |\n| EtherCAT | ✔ | ✖ |\n" + third_row + "\n")
+    nested_start = markdown.index("| 协议") + 2
+    nested_end = len(markdown.rstrip(" |\n"))
+    span = lambda text: {"start": markdown.index(text), "end": markdown.index(text) + len(text)}  # noqa: E731
+    cells = [{"id": f"cell-{n}", "type": "table_cell", "row": row, "col": col, "range": span(text)}
+             for n, (row, col, text) in enumerate([(0, 0, "eRob"), (0, 1, "prefix"), (1, 0, "E")])]
+    cells.append({"id": "cell-3", "type": "table_cell", "row": 1, "col": 1,
+                  "range": {"start": markdown.index("interface"), "end": nested_end}})
+    nested_cells = [{"id": f"nested-{row}-{col}", "type": "table_cell", "row": row, "col": col,
+                     "range": {"start": nested_start, "end": nested_start}} for row in range(3) for col in range(3)]
+    outer = {"id": "table-outer", "type": "table", "range": {"start": 0, "end": nested_end},
+             "children": [cell["id"] for cell in cells]}
+    nested = {"id": "table-nested", "type": "table", "range": {"start": nested_start, "end": nested_end},
+              "children": [cell["id"] for cell in nested_cells]}
+    blocks = [outer, *cells, nested, *nested_cells]
+    return markdown, blocks, {block["id"]: block for block in blocks}
+
+
+def test_a_nested_table_is_measured_against_its_own_index_table():
+    markdown, blocks, by_id = nested_erob80("| CANopen | ✖ | ✔ |")
+    assert check._rectangular_failures(check.markdown_tables(markdown), blocks, by_id) == []
+
+
+def test_a_ragged_nested_table_still_fails():
+    markdown, blocks, by_id = nested_erob80("| CANopen | ✖ |")
+    failures = check._rectangular_failures(check.markdown_tables(markdown), blocks, by_id)
+    assert failures == ["table-nested row 2 covers 2 of 3 columns; nothing covers col 2"], failures
+
+
 # --- reading order of a cell's words (JMC servo selection list, OCR path, 2026-10-29) ---------------------------
 # The image prints each header on stacked lines; docling's OCR path joined the lines out of order ("voltage supply
 # Power (V)"), and the extractor's label check then dropped correct values.

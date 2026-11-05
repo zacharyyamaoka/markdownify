@@ -347,8 +347,13 @@ def _rectangular_failures(tables: list[MarkdownTable], blocks: list[dict], by_id
     indexed = [block for block in blocks if block["type"] == "table" and block["range"]["end"] > block["range"]["start"]]
     failures = []
     for table in tables:
-        owner = next((block for block in indexed
-                      if block["range"]["start"] <= table.start < block["range"]["end"]), None)
+        # WHY the innermost overlapping table, not the first one holding the table's first character: eRob80
+        # (zeroerr.cn, 2026-11-05) nests a 3-column GFM table in a cell of a 2-column table, and the nested table's
+        # indexed range starts inside its opening "| " — so its first character fell only in the outer table, and
+        # every row was measured against 2 columns though each covers its own 3.
+        overlapping = [block for block in indexed
+                       if block["range"]["start"] < table.end and table.start < block["range"]["end"]]
+        owner = min(overlapping, key=lambda block: block["range"]["end"] - block["range"]["start"], default=None)
         if owner is not None:
             cells = [by_id[child] for child in owner.get("children", []) if child in by_id]
             width = owner.get("cols") or max((cell["col"] + cell.get("colspan", 1) for cell in cells), default=0)
