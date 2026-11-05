@@ -341,16 +341,16 @@ def build(fresh: bool) -> pathlib.Path:
         '<p class="v">Datasheets now go in through one page (files and links → a queue → one review tab per source), '
         'and anything that cites a source (an extracted value, a CRM note, an ObjectDB mix) can open it on the exact '
         'spot, saying whether the live page still matches.</p>'
-        '<p class="w">On <code>main</code> in markdownify, datasheet-extractor and source-highlighter and on '
-        '<code>master</code> in ObjectDB (bam-waste-objects): four local repos with no remote, nothing pushed. The '
-        'CRM\'s References are bam-data 71f814c, its own agent\'s commit, already on its private GitHub.'
+        '<p class="w">On <code>main</code> in markdownify, datasheet-extractor and source-highlighter: local repos with no '
+        'remote, nothing pushed. The CRM\'s References (bam-data 71f814c, already on its private GitHub) and ObjectDB\'s '
+        'reference files (bam-waste-objects) are their own agents\' commits.'
         f'{c(3, 8, 10, 11)}</p></div>'
         '<ul class="highlights">'
-        f'<li><b>The Sources app works on real datasheets.</b> Mean Well LRS-350 kept 32 values in the new “every '
+        f'<li><b>The Sources app works on real datasheets.</b> Mean Well LRS-350 kept 29–32 values (three runs; the model varies run to run) in the new “every '
         f'spec” mode, CubeMars AK80-9 kept 16 of 16, JMC\'s WebP list 5 of 6. The real-server journey passes 68 of '
         f'68 checks.{c(1, 4)}</li>'
         f'<li><b>One Reference format for everything that cites.</b> The CRM now holds 147 References pinned on 215 '
-        f'evidence entries; ObjectDB has reference files for 13 mixes. Each one is checked against the live source '
+        f'evidence entries; ObjectDB has reference files for 18 mixes. Each one is checked against the live source '
         f'and labelled <span class="pill live">live</span> <span class="pill deviated">deviated</span> '
         f'<span class="pill dead">dead</span> or <span class="pill">link-only</span>.{c(1, 7, 10)}</li>'
         f'<li><b>Peek → Lens is built.</b> Hover a citation anywhere and a crop of the source pops up; click to pin '
@@ -369,10 +369,6 @@ def build(fresh: bool) -> pathlib.Path:
              'convert, extract (1 min 20 s of real time, sped up 20× and labelled) → the review tab: map the printed '
              'model LRS-350-24 to your product, change rated power 350.4 → 350, strike the ripple value. Each act '
              f'lands in the version log under your initials.{c(4, 5)}'))
-    add('<div class="callout warn small"><b>One thing the recording still shows:</b> the “As printed” column reads '
-        '<code>0 &amp;#126; 14.6A</code>, an HTML entity left in the stored text. It was fixed three minutes after '
-        'this was recorded (46d75a2): the column now stores what the page prints, <code>0 ~ 14.6A</code>, and keeps '
-        f'the model\'s own copy separately. The stills below are from the same run.{c(1, 3)}</div>')
     add('<div class="shots wide">'
         + fig(add_sources, "Add sources: a dropped PDF, one link, the product Mean Well LRS-350-24, category psu, and the capture levels for web pages with their measured sizes",
               f"<b>Add sources.</b> Any number of files and links in one batch; products and a category for the "
@@ -456,7 +452,7 @@ def build(fresh: bool) -> pathlib.Path:
     add(table(["Source", "Fields asked", "Kept", "Dropped", "What it shows"], [
         ["JMC selection list (WebP image)", "actuator", "5", "1",
          "Row 60ASM200-1024C/2500C matched to the product after two fixes (below)."],
-        ["Mean Well LRS-350 (PDF)", "<i>psu</i>, open “every spec” mode", "32", "20",
+        ["Mean Well LRS-350 (PDF)", "<i>psu</i>, open “every spec” mode", "29–32", "~20",
          "17 of the 20 are ambiguous: one value printed under several conditions. Kept e.g. DC voltage 24 V, rated "
          "current 14.6 A, rated power 350.4 W, ripple 150 mVp-p."],
         ["CubeMars AK80-9 (link)", "actuator, 18 fields", "16", "0", "A web page captured as html + snapshot."],
@@ -467,7 +463,7 @@ def build(fresh: bool) -> pathlib.Path:
         f'<li><b>Also in:</b> a category per source; a link-only source stops at “captured” with a note instead of '
         f'failing; the author is your git name (shown as ZY); field labels as the sheet writes them; an '
         f'“extracting…” flag while a job runs.{c(1, 3)}</li>'
-        f'<li><b>Proof:</b> real-server journey 68 of 68 checks (stub server 67 of 67); spotlight within 0.014 px; '
+        f'<li><b>Proof:</b> real-server journey 70 of 70 checks (stub server 67 of 67); spotlight within 0.014 px; '
         f'every pane drags and is remembered (source pane 690 → 550 px, still 550 after reload); 52 tests.{c(1, 4)}</li>'
         f'<li><b>Nothing regressed in the extractor:</b> after every checker change, a rejudge (no LLM calls) gives '
         f'scores identical to the committed results: Option 1 keeps 334 synthetic values per model; R0 recall '
@@ -521,7 +517,7 @@ def build(fresh: bool) -> pathlib.Path:
         f'<li><code>bam-data capture &lt;ref&gt; --keep html</code> saves a copy through <code>mdify capture</code> '
         f'(71f814c).{c(10)}</li></ul>')
     add('<h3>ObjectDB (bam-waste-objects)</h3><ul>'
-        f'<li><code>refs/&lt;mix-id&gt;.json</code> files for 13 mixes, link-only today (no page + quote yet); '
+        f'<li><code>refs/&lt;mix-id&gt;.json</code> files for 18 mixes, link-only today (no page + quote yet); '
         f'composition rows cite <code>&lt;mix-id&gt;-&lt;n&gt;</code>.{c(1, 11)}</li>'
         f'<li><b>Its check run found a real bug.</b> A <code>file://</code> address with <code>%20</code> in it (its '
         f'Apple%20Notes sources) read as missing. Fixed in source-highlighter 9a405fc: <code>file://</code> addresses '
@@ -601,7 +597,7 @@ def build(fresh: bool) -> pathlib.Path:
 
     # ------------------------------------------------------------ 10 · decision surface
     add('<section id="decide"><h2><span class="n">10</span>Decisions</h2><h3>Done and proved</h3><ul>'
-        f'<li>Sources app: add → queue → review → publish on real datasheets; journey 68/68 on the real server; '
+        f'<li>Sources app: add → queue → review → publish on real datasheets; journey 70/70 on the real server; '
         f'52 tests.{c(1, 4)}</li>'
         f'<li>Reference format (§5) and live-first status (§6) written; the CRM\'s 147 References and ObjectDB\'s 13 '
         f'mixes use it.{c(7, 10, 11)}</li>'
