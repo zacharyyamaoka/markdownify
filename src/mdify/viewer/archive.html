@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Full archive · Markdownify</title>
+<!-- The bundle's source.wacz replayed by ReplayWeb.page (vendor/replaywebpage, unmodified, VENDOR.json), opened at the
+     captured URL and capture time that app.js passes as ?url=&ts=. WHY only a button and never a highlight surface:
+     ReplayWeb.page has no documented API into the replayed page, so marks stay on source.html and the snapshot. -->
+<script src="/static/vendor/replaywebpage/ui.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: #fff; }
+  replay-web-page { display: block; height: 100vh; }
+</style>
+</head>
+<body>
+<script>
+  const params = new URLSearchParams(location.search);
+  const replay = document.createElement("replay-web-page");
+  replay.setAttribute("source", new URL("/bundle/source.wacz", location.href).href);
+  // WHY replaybase under /static/: the service worker's scope is its own directory, so sw.js is served from there.
+  replay.setAttribute("replaybase", "/static/vendor/replaywebpage/");
+  replay.setAttribute("embed", "default");
+  if (params.get("url")) replay.setAttribute("url", params.get("url"));
+  if (params.get("ts")) replay.setAttribute("ts", params.get("ts"));
+  replay.dataset.testid = "archive-replay";
+  document.body.append(replay);
+</script>
+</body>
+</html>

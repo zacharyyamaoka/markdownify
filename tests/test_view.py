@@ -1,5 +1,5 @@
-"""`mdify view`: the server and the command, without a browser (tests/test_view_journey.py drives the page).
-Run: uv run pytest tests/test_view.py"""
+"""`mdify view`: the server and the command, without a browser (tests/test_view_journey.py drives the page) — except
+the full-archive button, whose replay only a browser can show. Run: uv run pytest tests/test_view.py"""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import pathlib
 import threading
 import types
 import urllib.error
+import urllib.parse
 import urllib.request
 
 import pytest
@@ -53,7 +54,7 @@ def test_serves_the_page_its_modules_and_the_bundle(served):
     status, content_type, body = get(served, "/")
     assert status == 200 and content_type.startswith("text/html") and b'src="/static/app.js"' in body
     for name in ("app.js", "markdown.js", "layout.js", "source.js", "vendor/source-highlighter.js", "vendor/lezer/markdown.js",
-                 "vendor/pdfjs/pdf.min.mjs"):
+                 "vendor/pdfjs/pdf.min.mjs", "vendor/replaywebpage/ui.js", "vendor/replaywebpage/sw.js"):
         status, content_type, _ = get(served, f"/static/{name}")
         assert (status, content_type.split(";")[0]) == (200, "text/javascript"), name
     assert get(served, "/static/viewer.css")[1].startswith("text/css")
@@ -125,3 +126,84 @@ def test_vendored_modules_match_their_record():
     for name, entry in record.items():
         assert hashlib.sha256((vendor / name).read_bytes()).hexdigest() == entry["sha256"], name
 
+
+
+def test_full_archive_button_replays_the_wacz_offline(tmp_path):
+    """A captured bundle with source.wacz gets "Full archive": ReplayWeb.page (vendored) replays the capture with the
+    site gone and every request off this machine aborted. A bundle without one gets no button."""
+    import http.server
+
+    sync_api = pytest.importorskip("playwright.sync_api")
+    pytest.importorskip("wacz")
+    from mdify import capture
+    from mdify.cache import Cache
+
+    page_html = b"<!doctype html><title>AK70-10</title><link rel=stylesheet href=/s.css><p>Rated torque 8.3 Nm</p>"
+
+    class Site(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def do_GET(self):
+            body, kind = {"/page": (page_html, "text/html"), "/s.css": (b"p{color:#c00}", "text/css"),
+                          "/robots.txt": (b"User-agent: *\nAllow: /\n", "text/plain")}.get(self.path, (b"", None))
+            self.send_response(200 if kind else 404)
+            self.send_header("Content-Type", kind or "text/plain")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+    site = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Site)
+    threading.Thread(target=site.serve_forever, daemon=True).start()
+    try:
+        captured = capture.capture(f"http://127.0.0.1:{site.server_address[1]}/page", ("html", "archive"),
+                                   tmp_path / "captured", cache=Cache(tmp_path / "cache"))
+    finally:
+        site.shutdown()
+        site.server_close()     # gone: the replay can only come from the archive
+
+    servers = [view.Server(captured.directory), view.Server(make_bundle(tmp_path / "plain"))]
+    for server in servers:
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+    off_machine = []
+
+    def gate(route, request):
+        if request.url.startswith(("http://127.0.0.1:", "data:", "blob:")):
+            return route.continue_()
+        off_machine.append(request.url)
+        route.abort()
+
+    try:
+        with sync_api.sync_playwright() as playwright:
+            browser = playwright.chromium.launch()
+            context = browser.new_context()
+            context.route("**/*", gate)
+            page = context.new_page()
+            page.goto(servers[1].url)
+            page.wait_for_selector("[data-testid=viewer]:not([hidden])")
+            assert page.locator("[data-testid=archive-open]").count() == 0
+
+            page.goto(servers[0].url)
+            button = page.wait_for_selector("[data-testid=archive-open]")
+            href = button.get_attribute("href")
+            params = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(href).query))
+            assert params["url"] == captured.final_url and len(params["ts"]) == 14 and params["ts"].isdigit()
+            assert button.get_attribute("target") == "_blank"
+
+            archive = context.new_page()
+            archive.goto(servers[0].url.rstrip("/") + href)
+            replayed = None
+            for _ in range(120):
+                replayed = next((frame for frame in archive.frames if "mp_/" in frame.url), None)
+                if replayed is not None and "Rated torque" in (replayed.evaluate("document.body?.innerText ?? ''")):
+                    break
+                archive.wait_for_timeout(250)
+            assert replayed is not None, [frame.url for frame in archive.frames]
+            assert "Rated torque 8.3 Nm" in replayed.evaluate("document.body.innerText")
+            assert replayed.evaluate("getComputedStyle(document.querySelector('p')).color") == "rgb(204, 0, 0)"
+            browser.close()
+    finally:
+        for server in servers:
+            server.shutdown()
+            server.server_close()
+    assert off_machine == []

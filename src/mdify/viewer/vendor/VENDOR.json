@@ -41,6 +41,20 @@
       "origin": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-6.4.299.tgz build/pdf.worker.min.mjs",
       "license": "Apache-2.0 (pdfjs/LICENSE)",
       "sha256": "9536359f1b8367850d485731ca1d5e45c159a7b7a0912325e539937aa21ceb18"
+    },
+    "replaywebpage/ui.js": {
+      "project": "replaywebpage",
+      "version": "2.5.4",
+      "origin": "https://registry.npmjs.org/replaywebpage/-/replaywebpage-2.5.4.tgz ui.js",
+      "license": "AGPL-3.0-or-later, unmodified (replaywebpage/LICENSE)",
+      "sha256": "64fac9def9f38da26192d739e2b035b6a440f11ac1155606f7962dd98a5b1685"
+    },
+    "replaywebpage/sw.js": {
+      "project": "replaywebpage",
+      "version": "2.5.4",
+      "origin": "https://registry.npmjs.org/replaywebpage/-/replaywebpage-2.5.4.tgz sw.js",
+      "license": "AGPL-3.0-or-later, unmodified (replaywebpage/LICENSE)",
+      "sha256": "92babd075286f3767c5655d9ff4744e2d7556e3a5b4765ea942a4584327d0601"
     }
   }
 }

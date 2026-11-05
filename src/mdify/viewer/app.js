@@ -136,6 +136,22 @@ function wordsAt(point, words, probed) {
   return hits;
 }
 
+// ---- the full archive ----------------------------------------------------------------------------------------------
+
+/** "Full archive": the bundle's source.wacz in ReplayWeb.page (archive.html), at the captured URL and capture time
+ * (CONTRACT §2.1). It opens in its own tab, because the replay is a whole browser of its own (pages, resources). */
+async function archiveButton(after) {
+  const reply = await fetch("/bundle/source.json");
+  const record = reply.ok ? await reply.json() : {};
+  const capture = [...(record.retrievals ?? [])].reverse().find((retrieval) => retrieval.capture) ?? {};
+  const params = new URLSearchParams();
+  if (capture.final_url) params.set("url", capture.final_url);
+  // ReplayWeb.page's ts is the 14-digit WARC timestamp: 2026-11-05T20:04:01Z → 20261105200401.
+  if (capture.retrieved_at) params.set("ts", capture.retrieved_at.replace(/\D/g, "").slice(0, 14));
+  after.after(element("a", { className: "toggle", href: `/static/archive.html?${params}`, target: "_blank", rel: "noopener",
+    "data-testid": "archive-open", title: "Replay every response of the capture offline (ReplayWeb.page)" }, "Full archive"));
+}
+
 // ---- the page ------------------------------------------------------------------------------------------------------
 
 function fail(message) {
@@ -207,6 +223,7 @@ async function main() {
   };
   drawInspectorToggle(split.inspectorOpen);
   inspectorToggle.addEventListener("click", () => split.toggleInspector());
+  if (manifest.files.includes("source.wacz")) archiveButton(inspectorToggle).catch(() => {});
 
   // ---- left: the source
   const sourceKind = sourceKindOf(manifest.media_type);
