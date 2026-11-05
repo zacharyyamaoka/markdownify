@@ -11,9 +11,9 @@ dependencies = [
 [project.optional-dependencies]
 # WHY an extra: docling pulls torch and its layout models (GBs); the core, the checker and the HTML path don't need it.
 pdf = ["docling>=2.50", "torch", "torchvision"]
-# The round-trip harness (the ruler) — kept apart from the pipelines it grades.
 # Web capture (CONTRACT §2.1): WARC records and the WACZ package, both Webrecorder's, stock.
 capture = ["warcio>=1.7", "wacz>=0.5", "playwright>=1.48", "pillow>=10"]
+# The round-trip harness (the ruler) — kept apart from the pipelines it grades.
 harness = ["playwright>=1.48", "pymupdf>=1.24", "img2pdf>=0.5", "apted>=1.0", "lxml>=5", "jiwer>=3.0"]
 
 [project.scripts]
