@@ -1,6 +1,6 @@
 """The aligner on its own: what counts as a markdown word, and how words find their source."""
 
-from mdify.align import (align_word_spans, align_words, markdown_words, normalize, word_ranges_of)
+from markdownify.align import (align_word_spans, align_words, markdown_words, normalize, word_ranges_of)
 
 
 def texts(markdown):

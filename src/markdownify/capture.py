@@ -1,4 +1,4 @@
-"""`mdify capture <url>`: Markdownify's web capture (CONTRACT §2.1). One browser visit builds every capture level,
+"""`markdownify capture <url>`: Markdownify's web capture (CONTRACT §2.1). One browser visit builds every capture level,
 prints each one's measured size, keeps the levels the caller chose and deletes the rest; then the HTML converter
 runs on `source.html` as usual, and when the snapshot is kept each word also gets its box on it (§3.3).
 
@@ -16,7 +16,7 @@ also the ones about to be thrown away — the size printed is the size of this p
 | archive  | source.wacz                   | every response of the visit, replayable offline            |
 
 The exception to "built on every run" is `single`: SingleFile drives a browser of its own, so it is a second visit to
-the site, made only when `single` is kept or on --dry-sizes (`mdify.capture_single` says why). Otherwise its row reads
+the site, made only when `single` is kept or on --dry-sizes (`markdownify.capture_single` says why). Otherwise its row reads
 "not built".
 
 Default `--keep`: html,snapshot. CONTRACT §2.1's policy — `html` always, `snapshot` + `archive` for every page a kept
@@ -74,7 +74,7 @@ class Captured:
     kept: tuple[str, ...]
     directory: pathlib.Path | None      # None for --dry-sizes
     archive_check: dict | None
-    built: object | None = None         # mdify.bundle.Built when the html level was kept and converted
+    built: object | None = None         # markdownify.bundle.Built when the html level was kept and converted
     warnings: list[str] = dataclasses.field(default_factory=list)
 
 
@@ -101,7 +101,7 @@ def capture(url: str, keep: tuple[str, ...] = DEFAULT_KEEP, out: pathlib.Path | 
         raise FetchError(f"{visit.final_url}: HTTP {visit.status}")
     media_type = media_type_of(visit.content_type, visit.main_body)
     if media_type != "text/html":
-        raise FetchError(f"{visit.final_url}: {media_type} is not a web page; use `mdify {url}` for it")
+        raise FetchError(f"{visit.final_url}: {media_type} is not a web page; use `markdownify {url}` for it")
     sha256 = sha256_bytes(visit.main_body)
     warnings = []
 
@@ -178,7 +178,7 @@ def capture(url: str, keep: tuple[str, ...] = DEFAULT_KEEP, out: pathlib.Path | 
         directory.mkdir(parents=True, exist_ok=True)
         captured.directory = directory
         if "html" in keep:
-            # The cache gets the bytes and their retrieval exactly as `mdify <url>` would; build() copies to --out.
+            # The cache gets the bytes and their retrieval exactly as `markdownify <url>` would; build() copies to --out.
             cache.put(visit.main_body, media_type, retrieval)
         else:
             _write_record(directory / "source.json", record, retrieval)

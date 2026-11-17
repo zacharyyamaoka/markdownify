@@ -28,8 +28,8 @@ import urllib.robotparser
 from . import __version__
 from .cache import Cache, iso_z, sha256_bytes, utc_now
 
-USER_AGENT = f"mdify/{__version__} (Markdownify; reads makers' datasheets for an open parts library, +https://robotparts.dev/)"
-ROBOTS_AGENT = "mdify"
+USER_AGENT = f"markdownify/{__version__} (Markdownify; reads makers' datasheets for an open parts library, +https://robotparts.dev/)"
+ROBOTS_AGENT = "markdownify"
 MIN_INTERVAL_S = 1.0
 TIMEOUT_S = 60.0
 MAX_BYTES = 64 * 1024 * 1024
@@ -169,7 +169,7 @@ class Fetcher:
 
     def permit(self, url: str) -> str:
         """The same gate `fetch` puts in front of every request — a refused host, then robots.txt — and this host's
-        pace, for a request someone else makes: `mdify capture`'s browser opens the page itself. Returns the
+        pace, for a request someone else makes: `markdownify capture`'s browser opens the page itself. Returns the
         normalised URL; raises FetchRefused."""
         if not url.startswith(("http://", "https://")):
             raise FetchRefused(f"{url!r} is not an http(s) URL")

@@ -12,7 +12,7 @@ stored beside `snapshot.jpg`, and each converter word's `snapshot` grounding der
 
 How a converter word finds its box (`attach`): its grounding's `source_range` names the inventory word(s) it came
 from, exactly; each inventory word's key is its xpath and its ordinal among that xpath's words, which the browser's
-walk (`mdify.capture_browser`) computes the same way; the key gives the measured box. WHY keys and not text: the
+walk (`markdownify.capture_browser`) computes the same way; the key gives the measured box. WHY keys and not text: the
 xpath + offset is already exact, while a text match on CubeMars would pin a spec cell to one of the menu's many
 copies of the same model name. Only where the page's scripts changed the DOM (so a key's text no longer agrees) does
 a word fall back to the order of the text: runs of at least `MIN_RUN` equal words in the same order.
@@ -191,7 +191,7 @@ def _covered_box(measured: list, first: int, last: int, length: int) -> list[flo
     return [min(p[0] for p in pieces), min(p[1] for p in pieces), max(p[2] for p in pieces), max(p[3] for p in pieces)]
 
 
-# --- checking (mdify check, through mdify.html.text_under) -------------------------------------------------------------
+# --- checking (markdownify check, through markdownify.html.text_under) -------------------------------------------------------------
 class _Measured:
     """snapshot.json's words in horizontal bands, for "which words lie under this box?"."""
     BANDS = 200
@@ -239,7 +239,7 @@ def _load(path: str, mtime_ns: int) -> _Measured | None:
 
 def disagreement(directory: pathlib.Path, snapshot_grounding: dict, text: str) -> str | None:
     """None when the measured words under `snapshot_grounding`'s box contain `text` (NFKC, whitespace ignored);
-    otherwise what the box holds instead, for `mdify check` to quote."""
+    otherwise what the box holds instead, for `markdownify check` to quote."""
     path = pathlib.Path(directory) / WORDS_NAME
     if not path.is_file():
         return f"no {WORDS_NAME} beside the source"

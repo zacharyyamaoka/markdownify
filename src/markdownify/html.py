@@ -2,10 +2,10 @@
 word is grounded as a code-point range into the decoded HTML of `source.<ext>`, with its xpath and a text quote.
 
 The work is split at the language line:
-- `html_tool/mdify_html.mjs` (Node: Defuddle + jsdom) knows the DOM. It returns Defuddle's markdown, each block's
+- `html_tool/markdownify_html.mjs` (Node: Defuddle + jsdom) knows the DOM. It returns Defuddle's markdown, each block's
   range in it with the element it came from, the page's visible words with where each sat in the HTML, and the
   subtrees Defuddle removed.
-- This module turns that into the contract's shapes and aligns markdown words to source words with `mdify.align`,
+- This module turns that into the contract's shapes and aligns markdown words to source words with `markdownify.align`,
   block by block: a block's markdown words are matched against the visible words inside its own element first.
   WHY block by block: CubeMars prints its whole catalogue in its menu, so "AK70-10" occurs many times on the page;
   matched against the whole page a spec-table cell could be pinned to a menu entry.
@@ -18,10 +18,10 @@ block rendered twice: duplicate). Everything else is kept, tab panels and short 
 WHY (coordinator, 2026-10-29, from this converter's own ledger on robotparts' 46 cached maker pages): left to pick
 the content, Defuddle kept 0.51 of the visible words — CubeMars lost its whole Specification tab to the description
 <article>, mdmbot its rated/peak torque line. Losing a spec table is data loss; keeping a bit of boilerplate is
-cheap. `convert(source, reader=True)` (`mdify_html.mjs convert --reader`) is Defuddle's own reading mode; there a
+cheap. `convert(source, reader=True)` (`markdownify_html.mjs convert --reader`) is Defuddle's own reading mode; there a
 removal counts as dropped only when its markup says why, and every other removed word stays `lost`.
 
-The inventory (`inventory`) is the page's visible text nodes, read by jsdom alone — `mdify_html.mjs inventory`
+The inventory (`inventory`) is the page's visible text nodes, read by jsdom alone — `markdownify_html.mjs inventory`
 never loads Defuddle — so the ledger is not graded by the code it grades. "Visible" is markup-only for v0: no
 <head>/script/style/template, no svg tooltip or definitions (an svg's drawn <text> is visible), no `hidden`, no
 inline display:none (visibility:hidden counts as visible: scroll-reveal scripts ship real content that way); CSS
@@ -42,14 +42,14 @@ import subprocess
 
 from rapidfuzz.distance import Levenshtein
 
-from mdify.align import align_word_spans, markdown_words, normalize
-from mdify.converters import Conversion, Source, SourceWord
+from markdownify.align import align_word_spans, markdown_words, normalize
+from markdownify.converters import Conversion, Source, SourceWord
 
 MEDIA_TYPES = ("text/html", "application/xhtml+xml")
 PIPELINE = "A"
 
 NODE = "/usr/bin/node"  # WHY absolute: the first `node` on this machine's PATH is an old balena copy (v8-era)
-TOOL = pathlib.Path(__file__).resolve().parents[2] / "html_tool" / "mdify_html.mjs"
+TOOL = pathlib.Path(__file__).resolve().parents[2] / "html_tool" / "markdownify_html.mjs"
 # WHY re-score: the aligner scores a word against the characters it matched, which can sit in two source words
 # far apart ("M" of "Maximum" + "ode" of "Model" = "Mode", 1.0). The score written is the markdown word against
 # the text its grounding actually covers, so invariant 1 holds by construction; below MIN_SCORE it is unlinked.
@@ -188,7 +188,7 @@ def inventory(source: Source) -> list[SourceWord]:
 
 
 def visible_page(source: Source) -> _Page:
-    """The inventory's words with their per-character offsets: `mdify.capture_snapshot` keys each one by xpath and
+    """The inventory's words with their per-character offsets: `markdownify.capture_snapshot` keys each one by xpath and
     ordinal to find its measured box."""
     return _Page(decoded_html(source), _run("inventory", source)["inventory"])
 
@@ -198,12 +198,12 @@ def text_under(source: Source, grounding: dict) -> str:
 
     A grounding that also carries a `snapshot` box (CONTRACT §3.3) is one claim in two places, so both must hold
     the text: when the words measured under the box (snapshot.json beside the source) do not contain it, the text
-    returned says what the box holds instead, and `mdify check` reports the word as not faithful."""
+    returned says what the box holds instead, and `markdownify check` reports the word as not faithful."""
     source_range = grounding["html"]["source_range"]
     fragment = decoded_html(source)[source_range["start"]:source_range["end"]]
     text = html.unescape(_TAG_OR_COMMENT.sub("", fragment))
     if "snapshot" in grounding:
-        from mdify.capture_snapshot import disagreement
+        from markdownify.capture_snapshot import disagreement
 
         held = disagreement(pathlib.Path(source.path).parent, grounding["snapshot"], text)
         if held is not None:

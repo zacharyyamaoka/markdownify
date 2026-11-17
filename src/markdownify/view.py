@@ -1,4 +1,4 @@
-"""`mdify view`: Markdownify's own page for one bundle — the source on the left (drawn by the Source Highlighter,
+"""`markdownify view`: Markdownify's own page for one bundle — the source on the left (drawn by the Source Highlighter,
 CONTRACT §9), the markdown on the right, every word linked both ways, and the KPIs it is graded by on top (§5, §6).
 
 A stdlib ThreadingHTTPServer on 127.0.0.1, read-only towards the bundle:

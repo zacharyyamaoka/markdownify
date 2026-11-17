@@ -1,11 +1,11 @@
-"""`mdify check <bundle>`: re-derive the five invariants of CONTRACT §4 from the cached bytes. No model, no network.
+"""`markdownify check <bundle>`: re-derive the five invariants of CONTRACT §4 from the cached bytes. No model, no network.
 
 Each invariant is re-computed from the files, never read from a converter's claim:
 1. Faithful — every linked word's markdown text equals the text-layer characters under its box (the converter
    module's `text_under`, which reads the source without the conversion code path), after NFKC and whitespace
    normalisation; or its score is below 1.0 and the ledger lists it. Sources without a text layer (images) have
    nothing independent to compare with: those words are counted as not checkable, not as passing.
-2. Traceable — every content character of document.md (mdify.align's content mask) lies inside some word's range.
+2. Traceable — every content character of document.md (markdownify.align's content mask) lies inside some word's range.
 3. Accounted for — the inventory, re-read from the bytes, gives every source word exactly the fate the ledger records.
 4. Well formed — word ranges in order and never overlapping; block ranges nest; every cell inside its table, its
    row/col inside the table's size; boxes inside the page; tables are rectangular — every row of every <table> and
@@ -406,7 +406,7 @@ def _pinned(directory, record, index, source) -> Result:
 
 
 def report(directory: pathlib.Path, results: list[Result]) -> str:
-    lines = [f"mdify check {directory}"]
+    lines = [f"markdownify check {directory}"]
     for result in results:
         lines.append(f"  {result.number} {result.name:<12} {'PASS' if result.ok else 'FAIL'}  {result.summary}")
         for failure in result.failures[:_SHOWN]:

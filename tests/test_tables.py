@@ -1,4 +1,4 @@
-"""The table grid (mdify.tables) and the checker's "tables are rectangular", without a model.
+"""The table grid (markdownify.tables) and the checker's "tables are rectangular", without a model.
 
 The shapes are Mean Well LRS-350's spec table as docling reads it (bundle ac3e7b8d…, 2026-10-29): "MODEL" in col 0
 with nothing at col 1, the OUTPUT group label down col 0 with rowspan 11, the row labels in col 1, eight model
@@ -8,9 +8,9 @@ columns after them; and row 20, where docling reports a colspan-5 cell over thre
 import pytest
 from docling_core.types.doc import TableCell, TableData, TableItem
 
-from mdify import check
-from mdify.docling_markdown import _Serializer
-from mdify.tables import GridCell, html_table
+from markdownify import check
+from markdownify.docling_markdown import _Serializer
+from markdownify.tables import GridCell, html_table
 
 MODELS = ["LRS-350-3.3", "LRS-350-4.2", "LRS-350-5", "LRS-350-12", "LRS-350-15", "LRS-350-24", "LRS-350-36",
           "LRS-350-48"]
@@ -77,7 +77,7 @@ def test_pipeline_a_keeps_index_cells_and_ranges_exactly():
     assert indexed[[c[5] for c in expected].index("350.4W")]["col"] == 7
 
 
-# --- mdify.tables -----------------------------------------------------------------------------------------------
+# --- markdownify.tables -----------------------------------------------------------------------------------------------
 def test_html_table_fills_the_uncovered_slot_with_an_empty_cell():
     markup, _ranges = html_table([GridCell(*cell) for cell in lrs350_cells()], rows=4, cols=10)
     assert markup.splitlines()[1].startswith("<tr><th>MODEL</th><td></td><th>LRS-350-3.3</th>")
@@ -181,7 +181,7 @@ def jmc_document(cell_text: str, paragraph_text: str):
 
 
 def jmc_units():
-    from mdify.docling_markdown import SourceText
+    from markdownify.docling_markdown import SourceText
 
     units = [SourceText(text=text, raw=text, page=1, box=box) for text, box in JMC_LINES]
     # Two lines of a paragraph, the second line's words read first by the converter.
@@ -191,7 +191,7 @@ def jmc_units():
 
 
 def test_cell_and_block_text_is_in_visual_reading_order():
-    from mdify.docling_markdown import serialize
+    from markdownify.docling_markdown import serialize
 
     units = jmc_units()
     conversion = serialize(jmc_document("voltage supply Power (V)", "at 24 V. Rated torque"), units, pages=[
@@ -209,7 +209,7 @@ def test_cell_and_block_text_is_in_visual_reading_order():
 
 
 def test_reading_order_keeps_the_converters_text_when_it_is_not_a_reordering_of_the_source():
-    from mdify.docling_markdown import serialize
+    from markdownify.docling_markdown import serialize
 
     # "Supply" is not a source word: the text is not just the source's lines reordered, so it is left alone.
     conversion = serialize(jmc_document("voltage Supply Power (V)", "Rated torque at 24 V."), jmc_units(), pages=[
@@ -223,7 +223,7 @@ def test_words_of_a_reordered_cell_keep_their_own_lines_box():
     # order, each word was pinned to the other line (score 0.83).
     from docling_core.types.doc import BoundingBox, CoordOrigin, DoclingDocument, ProvenanceItem, Size
 
-    from mdify.docling_markdown import SourceText, serialize
+    from markdownify.docling_markdown import SourceText, serialize
 
     lines = [("1024C: 1024 lines magnetic encoder;", 0.757), ("2500C: 2500 lines magnetic encoder", 0.789),
              ("2500: 2500 lines optical encoder;", 0.773)]                       # OCR order, not printed order

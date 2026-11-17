@@ -10,11 +10,11 @@ import shutil
 
 import pytest
 
-from mdify import align, bundle, check, ledger
-from mdify.cache import Cache, sha256_bytes, write_json
-from mdify.converters import SourceWord
-from mdify.docling_markdown import escape_html_text, escape_text
-from mdify.fetch import FetchRefused, Fetcher, media_type_of
+from markdownify import align, bundle, check, ledger
+from markdownify.cache import Cache, sha256_bytes, write_json
+from markdownify.converters import SourceWord
+from markdownify.docling_markdown import escape_html_text, escape_text
+from markdownify.fetch import FetchRefused, Fetcher, media_type_of
 
 pymupdf = pytest.importorskip("pymupdf")
 
@@ -32,7 +32,7 @@ def write_pdf(path: pathlib.Path, lines=LINES) -> pathlib.Path:
 
 def hand_bundle(directory: pathlib.Path, pdf_path: pathlib.Path) -> pathlib.Path:
     """A bundle written by hand: one paragraph per line, each word grounded on pdfplumber's own word box."""
-    from mdify import pdf
+    from markdownify import pdf
 
     directory.mkdir(parents=True, exist_ok=True)
     data = pdf_path.read_bytes()
@@ -54,16 +54,16 @@ def hand_bundle(directory: pathlib.Path, pdf_path: pathlib.Path) -> pathlib.Path
                        "range": {"start": offset, "end": offset + len(line)}, "grounding": [], "represented": True})
         offset += len(line) + 2
     markdown_bytes = markdown.encode()
-    index = {"schema": bundle.INDEX_SCHEMA, "tool": {"name": "mdify", "version": "test", "pipeline": "A"},
+    index = {"schema": bundle.INDEX_SCHEMA, "tool": {"name": "markdownify", "version": "test", "pipeline": "A"},
              "source": {"sha256": sha256, "media_type": "application/pdf"},
              "markdown_sha256": sha256_bytes(markdown_bytes), "range_units": "unicode_codepoints",
              "pages": [{"page": 1, "width": 595, "height": 842, "unit": "pt"}],
              "blocks": blocks, "words": words, "dropped": []}
     (directory / "document.md").write_bytes(markdown_bytes)
     write_json(directory / "index.json", index)
-    from mdify.converters import Source
+    from markdownify.converters import Source
     source = Source(path=directory / "source.pdf", sha256=sha256, media_type="application/pdf")
-    write_json(directory / "ledger.json", ledger.compute(index, markdown, pdf.inventory(source), "mdify.pdf.inventory"))
+    write_json(directory / "ledger.json", ledger.compute(index, markdown, pdf.inventory(source), "markdownify.pdf.inventory"))
     return directory
 
 
@@ -234,7 +234,7 @@ def test_end_to_end_pdf(tmp_path, monkeypatch):
 
 
 def test_reader_is_passed_only_to_a_converter_that_has_it(tmp_path, monkeypatch):
-    from mdify import converters
+    from markdownify import converters
 
     calls = []
 
@@ -265,11 +265,11 @@ def test_reader_is_passed_only_to_a_converter_that_has_it(tmp_path, monkeypatch)
         bundle.build(str(source), tmp_path / fake.__name__, cache=Cache(tmp_path / "cache"), reader=True,
                      log=messages.append)
     assert calls == [True, "plain"]
-    assert messages == ["mdify: --reader applies to web pages only; ignored for application/pdf"]
+    assert messages == ["markdownify: --reader applies to web pages only; ignored for application/pdf"]
 
 
 def test_check_refuses_a_source_only_directory_cleanly(tmp_path, capsys):
-    from mdify import cli
+    from markdownify import cli
 
     directory = tmp_path / "source-only"
     directory.mkdir()

@@ -3,13 +3,13 @@
 - **Parse:** docling's `DocumentConverter` (standard PDF pipeline: layout model + TableFormer, on the GPU) reads the
   structure — headings, paragraphs, lists, tables with their cells and header flags, pictures, page furniture.
   OCR is off: a born-digital PDF's text layer is the text, and OCR would only add guesses from pictures.
-- **Serialise:** `mdify.docling_markdown` writes the markdown item by item, recording each block's and cell's range.
-- **Align:** each markdown word is aligned (`mdify.align`) to pdfplumber's words of the page, block by block, and
+- **Serialise:** `markdownify.docling_markdown` writes the markdown item by item, recording each block's and cell's range.
+- **Align:** each markdown word is aligned (`markdownify.align`) to pdfplumber's words of the page, block by block, and
   grounded on the boxes of exactly the characters it matched — so a word docling split or joined still gets a box
   around its own characters.
 
 The ledger's inventory is pdfplumber's word list, and `text_under` reads pdfplumber's characters: both read the PDF
-without docling (CONTRACT §5), so `mdify check` never asks the converter to grade itself, and needs no model.
+without docling (CONTRACT §5), so `markdownify check` never asks the converter to grade itself, and needs no model.
 
 A PDF with no text layer at all (an image-only "datasheet", like Deep Robotics' J60 sheet) is out of v0's scope
 (CONTRACT §1); it is still converted — through docling's OCR, like a page image — so its tables are not silently
@@ -126,7 +126,7 @@ def convert(source: Source) -> Conversion:
 
 
 def _score_against_text_layer(conversion: Conversion, source: Source) -> None:
-    """Re-score every linked word against the text-layer characters under its final box, exactly as `mdify check`
+    """Re-score every linked word against the text-layer characters under its final box, exactly as `markdownify check`
     reads them (CONTRACT §3.2: the score is the word against the source text under its box).
 
     WHY after alignment: the aligner scores a word against the source word it matched, but its box can also take in

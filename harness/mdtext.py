@@ -1,7 +1,7 @@
 """Markdown words as a reader reads them: the ruler's own tokenizer and text normaliser.
 
-WHY the harness has its own instead of importing `mdify.align`: the harness grades mdify, so it may not share
-mdify's code. A bug shared by the ruler and the thing it measures cancels out and is never seen. Both follow the
+WHY the harness has its own instead of importing `markdownify.align`: the harness grades markdownify, so it may not share
+markdownify's code. A bug shared by the ruler and the thing it measures cancels out and is never seen. Both follow the
 same contract rule (CONTRACT §3.2: markdown syntax is never a word), written twice on purpose.
 
 Every code point of the markdown is one of:

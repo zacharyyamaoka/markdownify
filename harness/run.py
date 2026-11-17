@@ -1,6 +1,6 @@
 """Run a pipeline over every case × arm, time it, score it, and keep the results.
 
-    uv run python harness/run.py --pipeline 'uv run mdify {source} --out {bundle}'
+    uv run python harness/run.py --pipeline 'uv run markdownify {source} --out {bundle}'
     uv run python harness/run.py --pipeline 'uv run python harness/baselines/truth.py {truth} {bundle}'
     uv run python harness/run.py --pipeline 'uv run python harness/baselines/pdftotext.py {source} {bundle}' --arms pdf
 
@@ -11,7 +11,7 @@ baseline only, which exists to prove the ruler scores a perfect answer as perfec
 
 Cases are rendered first if harness/out lacks them. Bundles go to harness/out/runs/<name>/<case>/<arm>/bundle;
 scores beside them; the summary of every pipeline run so far in harness/out/results.json (one key per pipeline
-name, so baselines and mdify sit side by side). Arms are scored and printed separately, never pooled.
+name, so baselines and markdownify sit side by side). Arms are scored and printed separately, never pooled.
 """
 
 from __future__ import annotations

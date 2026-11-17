@@ -1,10 +1,10 @@
-"""`mdify --pipeline A|B|AB`: argument parsing and routing, with the vlm call and the pipeline-A build mocked (no model)."""
+"""`markdownify --pipeline A|B|AB`: argument parsing and routing, with the vlm call and the pipeline-A build mocked (no model)."""
 
 import types
 
 import pytest
 
-from mdify import bundle, cli, vlm
+from markdownify import bundle, cli, vlm
 
 KPIS = {"coverage": 1.0, "traceability": 1.0, "silently_lost": 0, "unlinked": 0, "inexact_words": 0,
         "time": {"pages": 1, "seconds": 0.1, "cold": True, "model_load_seconds": 0.0}}

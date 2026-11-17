@@ -1,11 +1,11 @@
 {
  "key": "vlm-ab-claude",
- "command": "uv run python -m mdify.vlm {source} --out {bundle} --model claude --place words",
+ "command": "uv run python -m markdownify.vlm {source} --out {bundle} --model claude --place words",
  "arm": "png",
  "ran_at": "2026-10-29T21:21:40Z",
  "cases": {
   "01-prose-spec": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/01-prose-spec/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/01-prose-spec/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/01-prose-spec/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/01-prose-spec/png/bundle --model claude --place words",
    "seconds": 16.693,
    "returncode": 0,
    "scores": {
@@ -44,7 +44,7 @@
    }
   },
   "02-spec-list": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/02-spec-list/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/02-spec-list/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/02-spec-list/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/02-spec-list/png/bundle --model claude --place words",
    "seconds": 20.752,
    "returncode": 0,
    "scores": {
@@ -83,7 +83,7 @@
    }
   },
   "03-simple-table": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/03-simple-table/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/03-simple-table/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/03-simple-table/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/03-simple-table/png/bundle --model claude --place words",
    "seconds": 21.51,
    "returncode": 0,
    "scores": {
@@ -127,7 +127,7 @@
    }
   },
   "04-multi-model": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/04-multi-model/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/04-multi-model/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/04-multi-model/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/04-multi-model/png/bundle --model claude --place words",
    "seconds": 33.231,
    "returncode": 0,
    "scores": {
@@ -171,7 +171,7 @@
    }
   },
   "05-merged-header": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/05-merged-header/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/05-merged-header/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/05-merged-header/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/05-merged-header/png/bundle --model claude --place words",
    "seconds": 28.621,
    "returncode": 0,
    "scores": {
@@ -215,7 +215,7 @@
    }
   },
   "06-units-in-headers": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/06-units-in-headers/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/06-units-in-headers/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/06-units-in-headers/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/06-units-in-headers/png/bundle --model claude --place words",
    "seconds": 26.901,
    "returncode": 0,
    "scores": {
@@ -259,7 +259,7 @@
    }
   },
   "07-footnotes": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/07-footnotes/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/07-footnotes/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/07-footnotes/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/07-footnotes/png/bundle --model claude --place words",
    "seconds": 19.283,
    "returncode": 0,
    "scores": {
@@ -303,7 +303,7 @@
    }
   },
   "08-two-column": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/08-two-column/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/08-two-column/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/08-two-column/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/08-two-column/png/bundle --model claude --place words",
    "seconds": 25.096,
    "returncode": 0,
    "scores": {
@@ -347,7 +347,7 @@
    }
   },
   "09-intended-drops": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/09-intended-drops/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/09-intended-drops/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/09-intended-drops/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/09-intended-drops/png/bundle --model claude --place words",
    "seconds": 20.754,
    "returncode": 0,
    "scores": {
@@ -394,7 +394,7 @@
    }
   },
   "10-torque-speed-plot": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/10-torque-speed-plot/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/10-torque-speed-plot/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/10-torque-speed-plot/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/10-torque-speed-plot/png/bundle --model claude --place words",
    "seconds": 18.686,
    "returncode": 0,
    "scores": {
@@ -445,7 +445,7 @@
    }
   },
   "11-mixed-chinese": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/11-mixed-chinese/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/11-mixed-chinese/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/11-mixed-chinese/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/11-mixed-chinese/png/bundle --model claude --place words",
    "seconds": 19.684,
    "returncode": 0,
    "scores": {
@@ -489,7 +489,7 @@
    }
   },
   "12-full-datasheet": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/12-full-datasheet/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/12-full-datasheet/png/bundle --model claude --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-claude/12-full-datasheet/png/input/source.png --out /home/bam/markdownify/harness/out/runs/vlm-ab-claude/12-full-datasheet/png/bundle --model claude --place words",
    "seconds": 24.906,
    "returncode": 0,
    "scores": {

@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 /**
  * Markdownify pipeline A for web pages (CONTRACT.md §3.3). Reads `{"html", "url"}` as JSON on stdin — `html` is the
- * page already decoded to a string by `mdify.html`, so both sides count offsets in the same string — and writes one
+ * page already decoded to a string by `markdownify.html`, so both sides count offsets in the same string — and writes one
  * JSON object to stdout.
  *
- *   node mdify_html.mjs convert [--reader]   the markdown, its blocks, the inventory (+ alt and svg tooltip
+ *   node markdownify_html.mjs convert [--reader]   the markdown, its blocks, the inventory (+ alt and svg tooltip
  *                                            words) and what was left out, with why
  *
  * Default (conservative) mode: Defuddle writes and standardises the markdown of the whole <body>; only removals
  * with a known reason are made (`conservativeRemovals`). `--reader`: Defuddle also picks the content, as in
  * Obsidian's reading view. WHY the default: see `convert`.
- *   node mdify_html.mjs inventory   the inventory alone; never loads Defuddle
+ *   node markdownify_html.mjs inventory   the inventory alone; never loads Defuddle
  *
  * WHY two libraries: Defuddle (kepano, MIT) is the best open judge of "what on this page is content" and writes
  * the markdown Obsidian's Web Clipper writes, but it clones the DOM and serialises it, so nothing it returns points
  * back at the page. jsdom's `includeNodeLocations` knows where every element and text node sat in the HTML string.
- * The seam between them is an id stamped on every element before Defuddle runs (`data-mdify-id`, let through
+ * The seam between them is an id stamped on every element before Defuddle runs (`data-markdownify-id`, let through
  * Defuddle's attribute allow-list): an id that survives is content, a subtree whose ids all vanished was removed.
  *
  * WHY the allow-list and not `debug: true`: debug mode also keeps `data-*`, but it changes how Defuddle flattens
@@ -24,7 +24,7 @@
  * Block ranges in the markdown come from private-use sentinels written into the text of each block of Defuddle's
  * cleaned HTML just before its own Turndown step runs; they are stripped afterwards. The markdown handed back is
  * always Defuddle's own (`reference_markdown`); when the sentinels changed it (a line-start escape Turndown no
- * longer saw), `marked_markdown` is the sentinel run with them stripped and `mdify.html` maps its ranges across.
+ * longer saw), `marked_markdown` is the sentinel run with them stripped and `markdownify.html` maps its ranges across.
  *
  * Defuddle reads a linkedom re-parse of the stamped page (see `convert`); jsdom keeps the locations.
  *
@@ -46,7 +46,7 @@ const { decodeHTML } = require('entities');
 // WHY: jsdom and Defuddle can log (CSS parse errors, debug notes); stdout carries the JSON and nothing else.
 console.log = console.info = console.warn = console.debug = (...args) => process.stderr.write(args.join(' ') + '\n');
 
-const STAMP = 'data-mdify-id';
+const STAMP = 'data-markdownify-id';
 
 // Never rendered as page text: the document head, code, templates, embedded documents, and the parts of an svg
 // that are not drawn (its <title>/<desc> tooltips, definitions). An svg's <text> IS drawn: a chart's axis labels are
@@ -343,7 +343,7 @@ class Page {
       if (FOOTER_NAME.test(name)) return { reason: 'footer', detail: `.${name.trim().split(/\s+/)[0]}` };
       if (ASIDE_NAME.test(name)) return { reason: 'boilerplate', detail: 'aside' };
     }
-    // No markup says why: Defuddle judged it not content. Left without a reason, so `mdify.html` does not count
+    // No markup says why: Defuddle judged it not content. Left without a reason, so `markdownify.html` does not count
     // it as dropped — when Defuddle's pick was too narrow these are real content words and must show as lost.
     return { reason: null, detail: `not kept by Defuddle (<${element.localName}>)` };
   }
@@ -705,7 +705,7 @@ async function convert(page, url, reader) {
 async function main() {
   const mode = process.argv[2];
   if (mode !== 'convert' && mode !== 'inventory') {
-    process.stderr.write('usage: node mdify_html.mjs convert [--reader]|inventory < {"html": "...", "url": "..."}\n');
+    process.stderr.write('usage: node markdownify_html.mjs convert [--reader]|inventory < {"html": "...", "url": "..."}\n');
     process.exit(2);
   }
   const chunks = [];

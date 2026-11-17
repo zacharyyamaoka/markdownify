@@ -1,10 +1,10 @@
-"""Score mdify.html over robotparts' cached HTML pages: coverage, traceability, lost/unlinked, faithful check.
+"""Score markdownify.html over robotparts' cached HTML pages: coverage, traceability, lost/unlinked, faithful check.
 Run: uv run --directory /home/bam/markdownify python scripts/real_html_ledger.py [sha-prefix ...]
 The real set (R0): the 46 web pages robotparts' ingestor cached on 2026-10-22."""
 import bisect, glob, json, pathlib, sys, time, unicodedata
-from mdify import html as mh
-from mdify.align import markdown_words, normalize
-from mdify.converters import Source
+from markdownify import html as mh
+from markdownify.align import markdown_words, normalize
+from markdownify.converters import Source
 
 BLOBS = pathlib.Path.home() / ".cache/robotparts-ingest/blobs"
 rows = []

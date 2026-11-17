@@ -1,6 +1,6 @@
-"""`mdify capture` against a local site: one browser visit, every level measured, the kept ones kept, the archive read
+"""`markdownify capture` against a local site: one browser visit, every level measured, the kept ones kept, the archive read
 back and replayed with the network blocked, the snapshot's word boxes checked against the browser's own element
-boxes (an oracle outside the word walk), and `mdify check` passing on — and failing on a tampered — snapshot box.
+boxes (an oracle outside the word walk), and `markdownify check` passing on — and failing on a tampered — snapshot box.
 
 The site is served on 127.0.0.1 by `http.server`; its robots.txt allows everything except /private/. Nothing here
 touches the network.
@@ -17,9 +17,9 @@ pytest.importorskip("playwright")
 pytest.importorskip("warcio")
 pytest.importorskip("wacz")
 
-from mdify import capture, capture_archive, capture_replay, capture_snapshot, check, cli  # noqa: E402
-from mdify.cache import Cache  # noqa: E402
-from mdify.fetch import FetchRefused  # noqa: E402
+from markdownify import capture, capture_archive, capture_replay, capture_snapshot, check, cli  # noqa: E402
+from markdownify.cache import Cache  # noqa: E402
+from markdownify.fetch import FetchRefused  # noqa: E402
 
 PAGE = b"""<!doctype html>
 <html><head><meta charset="utf-8"><title>AK80-9 test page</title>

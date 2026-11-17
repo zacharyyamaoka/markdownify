@@ -18,7 +18,7 @@ Prior Art (2026-10-29).md`.
 
 - **In:** a local file or a URL. v0 media types: born-digital PDF, HTML, PNG/JPEG of a digital page.
 - **Out of scope (Zach, 2026-10-29):** scans and photographed paper. Plots and diagrams are *flagged*, not converted.
-- Names: the project is Markdownify; the command and Python package are `mdify`.
+- Names: the project is Markdownify; the command and Python package are `markdownify`.
   WHY: PyPI's `markdownify` (an HTML→markdown library, 1.2.3) is already installed on this machine as a CLI.
 
 ## 2. The bundle
@@ -39,7 +39,7 @@ link against the exact bytes after the worktree that made it is gone (the same r
 
 ### 2.1 Capture levels (web pages)
 
-A URL is captured in one browser visit; the caller picks what to keep. `mdify capture <url> --keep html,snapshot,archive`
+A URL is captured in one browser visit; the caller picks what to keep. `markdownify capture <url> --keep html,snapshot,archive`
 prints each level's measured size, keeps the chosen ones and discards the rest. `single` alone is a second visit
 (SingleFile's own browser), made only when it is kept or for `--dry-sizes`.
 WHY a menu with sizes (Zach, 2026-10-29): "it's not either or. we should just provide all the options and then provide
@@ -70,7 +70,7 @@ plus page and box". Web Annotation-style text quotes survive only as the HTML li
 ```jsonc
 {
   "schema": "markdownify/index@0",
-  "tool": {"name": "mdify", "version": "0.1.0", "pipeline": "A" },        // which pipeline wrote it
+  "tool": {"name": "markdownify", "version": "0.1.0", "pipeline": "A" },        // which pipeline wrote it
   "source": {"sha256": "…", "media_type": "application/pdf"},
   "markdown_sha256": "…",
   "range_units": "unicode_codepoints",                                     // ranges count code points, end exclusive
@@ -128,7 +128,7 @@ in the browser at capture time: `{"html": {…}, "snapshot": {"page": 1, "box": 
 snapshot image). WHY: the Source Highlighter can then show an archived page as page + box, like every other source,
 without the maker's live CSS.
 
-## 4. Invariants (`mdify check <bundle>` re-derives each from the cached bytes; no model, no network)
+## 4. Invariants (`markdownify check <bundle>` re-derives each from the cached bytes; no model, no network)
 
 1. **Faithful:** for every word, the markdown text equals the source text under its grounding (PDF: the text-layer
    characters inside the box; HTML: the text at `source_range`), after NFKC and whitespace normalisation — or its
@@ -250,4 +250,4 @@ Fragment built from `text_quote` (web page).
 A standalone project, `/home/bam/source-highlighter` (Zach, 2026-10-29: a stable sub-assembly anything can use):
 source + locations + style (highlight, box, underline, spotlight, blackout) in → the source, highlighted, out. Its
 CONTRACT.md owns the Location format; every `grounding` in this contract is one of its Locations. The Markdownify demo
-(`mdify view`, Markdownify's own page) uses it as its left pane.
+(`markdownify view`, Markdownify's own page) uses it as its left pane.

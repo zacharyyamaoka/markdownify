@@ -1,11 +1,11 @@
-"""Replay a bundle's source.wacz through ReplayWeb.page (mdify view's archive page, vendored) in headless Chromium,
+"""Replay a bundle's source.wacz through ReplayWeb.page (markdownify view's archive page, vendored) in headless Chromium,
 with every request off 127.0.0.1 aborted; screenshot the replayed page full-page and compare with a reference image.
 
 uv run --project /home/bam/markdownify python -I rwp_replay.py <bundle dir> <reference image> <out.jpg> [url] [ts]
 
 url and ts are the page to open and its 14-digit capture time (pages/pages.jsonl of the WACZ, or source.json's last
 retrieval). FIRST_SCREEN=1 compares the first 1280×800 screen only. A Scoop archive needs a bundle directory around it
-(mdify view serves only complete bundles): copy ours' document.md, index.json, ledger.json, kpis.json, source.html
+(markdownify view serves only complete bundles): copy ours' document.md, index.json, ledger.json, kpis.json, source.html
 beside Scoop's source.wacz.
 """
 import json
@@ -18,7 +18,7 @@ import urllib.parse
 
 from playwright.sync_api import sync_playwright
 
-from mdify import capture_browser, capture_replay, view
+from markdownify import capture_browser, capture_replay, view
 
 
 def main(bundle, reference, out, url=None, ts=None):

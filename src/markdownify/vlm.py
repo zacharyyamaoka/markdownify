@@ -1,14 +1,14 @@
 """Pipeline B, "AI only": a vision model looks at each page image, writes the markdown AND says where every piece sits.
 
-    uv run python -m mdify.vlm <source> --out <bundle> [--model claude|codex] [--coordinates pixel|unit]
+    uv run python -m markdownify.vlm <source> --out <bundle> [--model claude|codex] [--coordinates pixel|unit]
 
 WHY it exists: Zach wants pipeline A (parse first, then align: docling + the text layer) measured against a model
 alone on the round-trip harness. The research predicts B loses on location (ParseBench, OCRBench v2 spotting: Opus
 4.6 7.4, GPT-5.2 2.2; research 1-converters.md, W2), but that was measured on older models than his CLIs run, so B
 gets one honest measured run. Nothing here reads the text layer to *place* a word — only to *grade* it afterwards.
 
-- **Render:** `mdify.vlm_pages` — PDF at 192 DPI, an image as is, HTML as one full-page screenshot.
-- **Ask:** `mdify.vlm_llm` — one call per page through `claude -p` or `codex exec`, structured output: blocks in
+- **Render:** `markdownify.vlm_pages` — PDF at 192 DPI, an image as is, HTML as one full-page screenshot.
+- **Ask:** `markdownify.vlm_llm` — one call per page through `claude -p` or `codex exec`, structured output: blocks in
   reading order, each with its type, its printed lines (text + box) or, for a table, its cells (row, col, spans,
   header kind, text, box). Coordinates are asked in image pixels by default; `--coordinates unit` asks for 0–1
   fractions instead (measured on one case before the full run: see the lane's report).
@@ -20,12 +20,12 @@ gets one honest measured run. Nothing here reads the text layer to *place* a wor
   general model for one box per word multiplies the output (and the error) for no measured gain — the same split
   the image path uses for OCR lines (`docling_markdown.box_of_characters`).
 - **Place (`--place words`, pipeline "AB"):** the line box becomes a search window instead of the answer: each word
-  is aligned to the source's own words inside it — the text layer, else RapidOCR's word boxes (`mdify.vlm_place`).
+  is aligned to the source's own words inside it — the text layer, else RapidOCR's word boxes (`markdownify.vlm_place`).
 - **Score:** a word's `score` is its text against the text-layer characters under its box (`pdf.text_under`, the
   checker's own reading), when the page has a text layer. When it has none (a PNG, an HTML screenshot) the score is
   `null` with `note: "unverified"` — NOT 1.0: nothing independent of the model says the word is right.
 
-The ledger and KPIs come from `mdify.ledger`, exactly as for pipeline A; the inventory is pipeline A's own module's
+The ledger and KPIs come from `markdownify.ledger`, exactly as for pipeline A; the inventory is pipeline A's own module's
 (pdfplumber words for a PDF, none for an image, the visible text nodes for HTML — whose source ranges a page box
 cannot overlap, so an HTML bundle from B shows every source word lost: B grounds on the screenshot, not the DOM).
 
@@ -362,7 +362,7 @@ class _Assembler:
         return blocks
 
     def html_table(self, cells: list[dict], rows: int, cols: int, page: int) -> list[dict]:
-        """WHY `mdify.tables.html_table`: a model's cell list is not always a grid either (a missing cell, two cells
+        """WHY `markdownify.tables.html_table`: a model's cell list is not always a grid either (a missing cell, two cells
         on one slot, a span over a neighbour); written row by row, the cells after a gap slide one column left and
         a value reads under the wrong model. The shared builder keeps every cell at its own (row, col) and fills
         or clips the rest; the index keeps the model's own spans."""
@@ -409,7 +409,7 @@ def assemble(replies: list[tuple[int, dict, int, int]], coordinates: str,
              units: tuple[list, str] | None = None) -> Conversion:
     """[(page, structured reply, image width px, image height px)] → the Conversion (pages left to the caller).
     `units` = (source words, their kind) moves each word onto the source words inside its line (`--place words`,
-    `mdify.vlm_place`); without them a word is its character-count slice of the line box."""
+    `markdownify.vlm_place`); without them a word is its character-count slice of the line box."""
     assembler = _Assembler()
     for page, output, width, height in replies:
         def to_box(box, width=width, height=height):
@@ -428,7 +428,7 @@ def assemble(replies: list[tuple[int, dict, int, int]], coordinates: str,
 
 # --- scoring ----------------------------------------------------------------------------------------------------
 def score_words(conversion: Conversion, source: Source) -> None:
-    """Each linked word against the text-layer characters under its box, as `mdify check` reads them; `null` and
+    """Each linked word against the text-layer characters under its box, as `markdownify check` reads them; `null` and
     `note: "unverified"` where there is no text layer to read. WHY never 1.0 by default: a score is a claim that
     the source says what the markdown says, and for a page image only the model says so. A word `--place words`
     put on an OCR word keeps the aligner's score against it, noted "ocr" (an engine apart from the model, but not
@@ -453,7 +453,7 @@ def score_words(conversion: Conversion, source: Source) -> None:
             del word["note"]
 
 
-# --- the protocol (mdify.converters) ----------------------------------------------------------------------------
+# --- the protocol (markdownify.converters) ----------------------------------------------------------------------------
 def _pipeline_a(source: Source):
     """Pipeline A's module for this media type: B is graded against the same inventory and text layer as A."""
     import importlib
@@ -544,11 +544,11 @@ def _write_run(run_dir: pathlib.Path, run: Run) -> None:
                                       encoding="utf-8")
 
 
-# --- a bundle (mdify.bundle.build, with this converter and its options) -----------------------------------------
+# --- a bundle (markdownify.bundle.build, with this converter and its options) -----------------------------------------
 def build(target: str, out: pathlib.Path | None = None, *, backend: str = "claude",
           coordinates: str = DEFAULT_COORDINATES, model: str | None = None, place: str = "chars", cache=None,
           log=None):
-    """`mdify.bundle.build` for pipeline B. WHY not bundle.build itself: it picks the converter by media type
+    """`markdownify.bundle.build` for pipeline B. WHY not bundle.build itself: it picks the converter by media type
     (pipeline A's), and B's backend and coordinate options are not part of the protocol. Everything else — the
     fetch record, index, ledger and KPIs — goes through the same core functions."""
     from . import bundle
@@ -595,7 +595,7 @@ def build(target: str, out: pathlib.Path | None = None, *, backend: str = "claud
 
 
 def _scored_for_ledger(index: dict) -> dict:
-    """The index with each unverified word's `null` score read as 0.0 — `mdify.ledger` compares scores with < 1.0
+    """The index with each unverified word's `null` score read as 0.0 — `markdownify.ledger` compares scores with < 1.0
     — so the ledger lists every unverified word among the inexact ones (flagged, never hidden); `build` writes the
     null back into the ledger's rows."""
     copied = copy.copy(index)
@@ -604,7 +604,7 @@ def _scored_for_ledger(index: dict) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m mdify.vlm", description="Pipeline B: a vision model writes the "
+    parser = argparse.ArgumentParser(prog="python -m markdownify.vlm", description="Pipeline B: a vision model writes the "
                                      "markdown and says where each piece sits (one call per page).")
     parser.add_argument("source", help="a local file or an http(s) URL (PDF, PNG, JPEG, HTML)")
     parser.add_argument("--out", type=pathlib.Path, help="write the bundle here instead of the cache")
@@ -626,7 +626,7 @@ def main(argv: list[str] | None = None) -> int:
                       model=arguments.model_id, place=arguments.place,
                       log=lambda message: print(message, file=sys.stderr))
     except (FetchRefused, FetchError, NoConverter, FileNotFoundError, RuntimeError) as error:
-        print(f"mdify.vlm: {arguments.source}: {error}", file=sys.stderr)
+        print(f"markdownify.vlm: {arguments.source}: {error}", file=sys.stderr)
         return 1
     kpis = built.kpis
     print(display_path(built.directory))

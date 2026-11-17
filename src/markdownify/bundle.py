@@ -1,10 +1,10 @@
 """The core: a source (a path or a URL) → a bundle directory (CONTRACT §2).
 
-The core knows converters only through the protocol in `mdify.converters`. It picks one by the source's media type,
+The core knows converters only through the protocol in `markdownify.converters`. It picks one by the source's media type,
 importing it lazily — so the PDF path works while the HTML converter does not exist yet, and a converter's heavy
 dependencies (docling, torch) load only when that converter runs. Then it writes the bundle: the bytes and their
 fetch record, the markdown, the span index, and the ledger and KPIs, which it computes itself from the converter's
-Conversion plus the converter's independent inventory (`mdify.ledger`), so every converter is graded the same way.
+Conversion plus the converter's independent inventory (`markdownify.ledger`), so every converter is graded the same way.
 """
 
 from __future__ import annotations
@@ -28,11 +28,11 @@ INDEX_SCHEMA = "markdownify/index@0"
 # Media type → the module that converts it. WHY a table of names, not imports: importing is what costs (docling
 # loads torch), and a module that is missing or broken must not stop the others.
 CONVERTERS = {
-    "application/pdf": "mdify.pdf",
-    "text/html": "mdify.html",
-    "image/png": "mdify.image",
-    "image/jpeg": "mdify.image",
-    "image/webp": "mdify.image",
+    "application/pdf": "markdownify.pdf",
+    "text/html": "markdownify.html",
+    "image/png": "markdownify.image",
+    "image/jpeg": "markdownify.image",
+    "image/webp": "markdownify.image",
 }
 _warmed: set[str] = set()
 
@@ -72,7 +72,7 @@ def resolve(target: str, cache: Cache, log=None) -> tuple[str, str, str | None]:
 def index_of(conversion: Conversion, source: Source, pipeline: str, markdown_sha256: str) -> dict:
     return {
         "schema": INDEX_SCHEMA,
-        "tool": {"name": "mdify", "version": __version__, "pipeline": pipeline},
+        "tool": {"name": "markdownify", "version": __version__, "pipeline": pipeline},
         "source": {"sha256": source.sha256, "media_type": source.media_type},
         "markdown_sha256": markdown_sha256,
         "range_units": "unicode_codepoints",
@@ -88,7 +88,7 @@ def build(target: str, out: pathlib.Path | None = None, *, cache: Cache | None =
     """`reader=True` asks a converter that has a reading mode (the HTML one: Defuddle picks the content) to use it;
     for a converter without one it is ignored, and `log` says so.
 
-    `resolved` is (sha256, media type, url) of bytes already in the cache — `mdify capture` passes the page its
+    `resolved` is (sha256, media type, url) of bytes already in the cache — `markdownify capture` passes the page its
     browser got, which looking the URL up again could swap for another retrieval of it."""
     cache = cache or Cache()
     sha256, media_type, url = resolved or resolve(target, cache, log)
@@ -114,7 +114,7 @@ def build(target: str, out: pathlib.Path | None = None, *, cache: Cache | None =
         if "reader" in inspect.signature(module.convert).parameters:
             options["reader"] = True
         elif log:
-            log(f"mdify: --reader applies to web pages only; ignored for {media_type}")
+            log(f"markdownify: --reader applies to web pages only; ignored for {media_type}")
     conversion = module.convert(source, **options)
     finished = time.perf_counter()
     timing = {"seconds": round(finished - loaded, 3), "cold": cold,

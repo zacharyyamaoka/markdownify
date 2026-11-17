@@ -30,14 +30,14 @@ PAGES = 4
 
 
 def _cached_pdf(url: str) -> pathlib.Path:
-    from mdify.cache import Cache
+    from markdownify.cache import Cache
 
     root = Cache().root / "bundles"
     for record_path in root.glob("*/source.json"):
         record = json.loads(record_path.read_text(encoding="utf-8"))
         if any(retrieval.get("url") == url for retrieval in record.get("retrievals", [])):
             return record_path.parent / "source.pdf"
-    raise FileNotFoundError(f"{url} is not in the markdownify cache; run `uv run mdify {url}` once")
+    raise FileNotFoundError(f"{url} is not in the markdownify cache; run `uv run markdownify {url}` once")
 
 
 def inputs(out: pathlib.Path) -> dict[str, pathlib.Path]:
@@ -61,8 +61,8 @@ def inputs(out: pathlib.Path) -> dict[str, pathlib.Path]:
 
 
 def run(pipeline: str, model: str, out: pathlib.Path) -> None:
-    from mdify import bundle, vlm
-    from mdify.cache import Cache
+    from markdownify import bundle, vlm
+    from markdownify.cache import Cache
 
     cache = Cache(out / "cache")
     for name, path in inputs(out).items():

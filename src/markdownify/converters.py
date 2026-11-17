@@ -1,5 +1,5 @@
-"""The seam every converter implements (CONTRACT.md §2–5). One module per kind of source: `mdify.pdf`, `mdify.html`,
-`mdify.image`, later `mdify.vlm` (pipeline B). The core (`bundle`, `ledger`, `check`, `cli`) knows only this protocol.
+"""The seam every converter implements (CONTRACT.md §2–5). One module per kind of source: `markdownify.pdf`, `markdownify.html`,
+`markdownify.image`, later `markdownify.vlm` (pipeline B). The core (`bundle`, `ledger`, `check`, `cli`) knows only this protocol.
 
 A converter module exposes:
 
@@ -16,7 +16,7 @@ A converter module exposes:
 
     def text_under(source: Source, grounding: dict) -> str
         The source text a grounding points at (PDF: text-layer characters inside the box; HTML: the text at
-        source_range). `mdify check` compares it to the markdown word (invariant 1).
+        source_range). `markdownify check` compares it to the markdown word (invariant 1).
 """
 
 from __future__ import annotations

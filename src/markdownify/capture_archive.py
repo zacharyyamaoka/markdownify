@@ -96,7 +96,7 @@ def write_warc(visit: Visit, path: pathlib.Path) -> int:
     with open(path, "wb") as stream:
         writer = _writer(stream)
         info = writer.create_warcinfo_record(path.name, {
-            "software": "mdify capture (warcio)", "format": "WARC File Format 1.1",
+            "software": "markdownify capture (warcio)", "format": "WARC File Format 1.1",
             "browser": visit.browser, "http-header-user-agent": visit.user_agent, "isPartOf": visit.url})
         writer.write_record(info)
         for exchange in archived(visit):
@@ -129,7 +129,7 @@ def write_wacz(visit: Visit, warc_path: pathlib.Path, wacz_path: pathlib.Path) -
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")      # surt and pyamf, imported by py-wacz, warn on import (py3.12+)
         from wacz.main import main as wacz_main
-    # WHY capture its output: py-wacz prints progress to stdout, which `mdify capture` keeps for its size table;
+    # WHY capture its output: py-wacz prints progress to stdout, which `markdownify capture` keeps for its size table;
     # it is shown only when packaging fails.
     progress = io.StringIO()
     with contextlib.redirect_stdout(progress):

@@ -1,7 +1,7 @@
-"""`mdify <path-or-url>… [--pipeline A|B|AB] [--model claude|codex] [--out DIR] [--reader]` writes a bundle per source; `mdify check <bundle>…` re-derives its invariants;
-`mdify capture <url> [--keep …] [--out DIR] [--dry-sizes]` captures a web page in one browser visit, plus a second one
+"""`markdownify <path-or-url>… [--pipeline A|B|AB] [--model claude|codex] [--out DIR] [--reader]` writes a bundle per source; `markdownify check <bundle>…` re-derives its invariants;
+`markdownify capture <url> [--keep …] [--out DIR] [--dry-sizes]` captures a web page in one browser visit, plus a second one
 for `single` when it is kept or on --dry-sizes (CONTRACT §2.1);
-`mdify view <source-or-bundle> [--port N] [--pipeline A|B|AB]` serves Markdownify's own page for one bundle.
+`markdownify view <source-or-bundle> [--port N] [--pipeline A|B|AB]` serves Markdownify's own page for one bundle.
 
 Several sources in one run share the loaded models, so the first conversion is timed cold and the rest warm
 (kpis.json `time.cold`).
@@ -19,7 +19,7 @@ PIPELINES = ("A", "B", "AB")
 
 
 def _convert(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(prog="mdify", description="Any digital source → markdown in which every word "
+    parser = argparse.ArgumentParser(prog="markdownify", description="Any digital source → markdown in which every word "
                                      "links back to where it sits in the source (CONTRACT.md).")
     parser.add_argument("sources", nargs="+", help="a local file or an http(s) URL (PDF, HTML, PNG, JPEG)")
     parser.add_argument("--pipeline", choices=PIPELINES, default="A", help="A (default): parse the source, no model; "
@@ -45,7 +45,7 @@ def _convert(argv: list[str]) -> int:
         try:
             built = _build(target, arguments)
         except (FetchRefused, FetchError, bundle.NoConverter, FileNotFoundError, RuntimeError) as error:
-            print(f"mdify: {target}: {error}", file=sys.stderr)
+            print(f"markdownify: {target}: {error}", file=sys.stderr)
             status = 1
             continue
         kpis = built.kpis
@@ -78,7 +78,7 @@ def _fmt(value) -> str:
 
 
 def _check(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(prog="mdify check", description="Re-derive a bundle's invariants (CONTRACT §4) "
+    parser = argparse.ArgumentParser(prog="markdownify check", description="Re-derive a bundle's invariants (CONTRACT §4) "
                                      "from its cached bytes; no model, no network. Exits 1 on any failure.")
     parser.add_argument("bundles", nargs="+", type=pathlib.Path)
     arguments = parser.parse_args(argv)
@@ -90,7 +90,7 @@ def _check(argv: list[str]) -> int:
         try:
             results = check.check(directory)
         except check.IncompleteBundle as error:
-            print(f"mdify check {display_path(directory)}: {error}", file=sys.stderr)
+            print(f"markdownify check {display_path(directory)}: {error}", file=sys.stderr)
             status = 1
             continue
         print(check.report(display_path(directory), results))
@@ -102,11 +102,11 @@ def _check(argv: list[str]) -> int:
 def _capture(argv: list[str]) -> int:
     from .capture import DEFAULT_KEEP, LEVELS
 
-    parser = argparse.ArgumentParser(prog="mdify capture", description="Capture a web page in one browser visit: "
+    parser = argparse.ArgumentParser(prog="markdownify capture", description="Capture a web page in one browser visit: "
                                      "every level is built and its size printed, the chosen ones are kept and the "
                                      "rest deleted (CONTRACT §2.1). The one exception is single: SingleFile drives "
                                      "its own browser, a second visit to the site, made only when single is kept or "
-                                     "on --dry-sizes. Then the HTML is converted as `mdify <url>` would, with each "
+                                     "on --dry-sizes. Then the HTML is converted as `markdownify <url>` would, with each "
                                      "word's box on the snapshot when the snapshot is kept.")
     parser.add_argument("url", help="an http(s) web page")
     parser.add_argument("--keep", default=",".join(DEFAULT_KEEP),
@@ -129,7 +129,7 @@ def _capture(argv: list[str]) -> int:
         captured = capture.capture(arguments.url, keep, arguments.out, dry_sizes=arguments.dry_sizes,
                                    log=lambda message: print(message, file=sys.stderr))
     except (FetchRefused, FetchError, bundle.NoConverter) as error:
-        print(f"mdify capture: {arguments.url}: {error}", file=sys.stderr)
+        print(f"markdownify capture: {arguments.url}: {error}", file=sys.stderr)
         return 1
     capture.main_report(captured, arguments.dry_sizes)
     if captured.built is not None:
@@ -140,13 +140,13 @@ def _capture(argv: list[str]) -> int:
 
 
 def _view(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(prog="mdify view", description="Markdownify's own page for one bundle: the "
+    parser = argparse.ArgumentParser(prog="markdownify view", description="Markdownify's own page for one bundle: the "
                                      "source beside its markdown, every word linked both ways, and the KPIs on top. "
                                      "Serves on 127.0.0.1 and prints the URL; opens no browser window.")
     parser.add_argument("target", help="a bundle directory (opened as is), or a local file or http(s) URL "
-                        "(converted first, exactly as `mdify <source>` does)")
+                        "(converted first, exactly as `markdownify <source>` does)")
     parser.add_argument("--port", type=int, default=0, help="port to serve on (default: any free one)")
-    parser.add_argument("--pipeline", choices=PIPELINES, default="A", help="how to convert a source (as `mdify "
+    parser.add_argument("--pipeline", choices=PIPELINES, default="A", help="how to convert a source (as `markdownify "
                         "--pipeline`); ignored for a bundle directory")
     arguments = parser.parse_args(argv)
 
@@ -161,15 +161,15 @@ def _view(argv: list[str]) -> int:
         try:
             directory = _build(arguments.target, options).directory
         except (FetchRefused, FetchError, bundle.NoConverter, FileNotFoundError, RuntimeError) as error:
-            print(f"mdify view: {arguments.target}: {error}", file=sys.stderr)
+            print(f"markdownify view: {arguments.target}: {error}", file=sys.stderr)
             return 1
     try:
         server = view.Server(directory, arguments.port)
     except view.NotABundle as error:
-        print(f"mdify view: {error}", file=sys.stderr)
+        print(f"markdownify view: {error}", file=sys.stderr)
         return 1
     except OSError as error:
-        print(f"mdify view: port {arguments.port}: {error.strerror or error}", file=sys.stderr)
+        print(f"markdownify view: port {arguments.port}: {error.strerror or error}", file=sys.stderr)
         return 1
     print(display_path(server.bundle))
     print(f"  {server.url}", flush=True)
@@ -191,6 +191,14 @@ def main(argv: list[str] | None = None) -> int:
     if argv and argv[0] == "view":
         return _view(argv[1:])
     return _convert(argv)
+
+
+# WHY: Zach renamed the tool from mdify to markdownify (2026-11-16); the old command stays only so old scripts and
+# agents keep working, and says so on stderr (stdout stays the tool's own).
+def main_deprecated_alias(argv: list[str] | None = None) -> int:
+    print("mdify: deprecated name, use `markdownify` (same arguments)", file=sys.stderr)
+    return main(argv)
+
 
 if __name__ == "__main__":
     sys.exit(main())

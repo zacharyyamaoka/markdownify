@@ -432,7 +432,7 @@ def build(fresh: bool) -> pathlib.Path:
         ("SingleFile adopted as a display-only <code>single</code> level",
          f"A one-file offline copy to look at; values keep citing <code>source.html</code>.{c(14)}",
          undo("markdownify", "b96e144")),
-        ("ReplayWeb.page behind a “Full archive” button in <code>mdify view</code>",
+        ("ReplayWeb.page behind a “Full archive” button in <code>markdownify view</code>",
          f"Replays the stored archive with 0 requests off the machine.{c(14)}",
          undo("markdownify", "c50c089")),
         ("Scoop not adopted",
@@ -514,7 +514,7 @@ def build(fresh: bool) -> pathlib.Path:
         f'Python records and projected to the §5 JSON.{c(1, 10)}</li>'
         f'<li><b>215 evidence entries</b> now carry <code>ref</code>, pinned wherever an entry cites exactly one '
         f'source; the original source strings are untouched.{c(1, 10)}</li>'
-        f'<li><code>bam-data capture &lt;ref&gt; --keep html</code> saves a copy through <code>mdify capture</code> '
+        f'<li><code>bam-data capture &lt;ref&gt; --keep html</code> saves a copy through <code>markdownify capture</code> '
         f'(71f814c).{c(10)}</li></ul>')
     add('<h3>ObjectDB (bam-waste-objects)</h3><ul>'
         f'<li><code>refs/&lt;mix-id&gt;.json</code> files for 18 mixes, link-only today (no page + quote yet); '
@@ -545,7 +545,7 @@ def build(fresh: bool) -> pathlib.Path:
          "Done, pinned"],
         ["SingleFile", "A faithful one-file offline copy", "Done: the display-only <code>single</code> level"],
         ["ReplayWeb.page", "Replay the full archive", "Done: the “Full archive” button"],
-        ["Scoop (Harvard LIL)", "The recorder under <code>mdify capture</code>", "Not adopted: the trial said no"],
+        ["Scoop (Harvard LIL)", "The recorder under <code>markdownify capture</code>", "Not adopted: the trial said no"],
         ["Memento Time Travel", "“Archived near this date”", "Not used: dead in DNS"],
     ], row_classes=["", "win", "win", "win", "no", "no"]))
     add('</section>')
@@ -571,12 +571,12 @@ def build(fresh: bool) -> pathlib.Path:
         f'view</code> serves Lens and the Peek script.{c(8)}</li>'
         f'<li><b>Proof:</b> marks vs their Locations within 0.026 px over every kind; PDF quotes vs pdfplumber within '
         f'0.017 px; Details drags 340 → 460 px and stays 460 after reload; the pinned Peek panel\'s move and resize '
-        f'are remembered; Peek works in a plain page on another origin and inside a copy of <code>mdify view</code> '
+        f'are remembered; Peek works in a plain page on another origin and inside a copy of <code>markdownify view</code> '
         f'with 0 console lines; 81 tests.{c(1)}</li></ul></section>')
 
     # ------------------------------------------------------------ 9 · capture trial
     add('<section id="capture"><h2><span class="n">9</span>Capture trial</h2>'
-        f'<p>Our recorder (<code>mdify capture</code>) against two stock tools, on three real pages, one polite visit '
+        f'<p>Our recorder (<code>markdownify capture</code>) against two stock tools, on three real pages, one polite visit '
         f'each. <i>Replay</i> is the share of pixels that differ when the saved copy is reopened offline and compared '
         f'with our snapshot; lower is better.{c(14)}</p>')
     add(table(["Page", "Ours", "SingleFile", "Scoop"], [
@@ -609,8 +609,8 @@ def build(fresh: bool) -> pathlib.Path:
         '<h3>Decided for you</h3>'
         '<p>Eight calls, each with its one-line undo, in <a href="#decided">section 4</a>.</p>'
         '<h3>Left</h3><ul>'
-        f'<li><b>Running now:</b> ragged source tables in web pages fail <code>mdify check</code> rule 4 (eRob80); '
-        f'<code>mdify view</code>\'s headline reads “27 lostnull”.{c(1)}</li>'
+        f'<li><b>Running now:</b> ragged source tables in web pages fail <code>markdownify check</code> rule 4 (eRob80); '
+        f'<code>markdownify view</code>\'s headline reads “27 lostnull”.{c(1)}</li>'
         '<li><b>Next:</b> adopt pdf.js\'s <code>PDFViewer</code>; Lens\'s auto / live / stored modes; quote search '
         'inside PDFs in the static form; OCR confidence into word scores; child bundles for iframes and images in web '
         f'pages.{c(1)}</li>'
@@ -640,8 +640,8 @@ def build(fresh: bool) -> pathlib.Path:
                 f"--statuses {VIEWER_MEDIA / 'statuses.json'}",
                 "<b>Lens</b> on the seven demo References from the hero, with the real check's statuses; "
                 "<code>#ref=ref-2</code> opens the LRS-350 one"))
-    add(command(f"uv run --directory /home/bam/markdownify mdify view {LRS350_BUNDLE}",
-                "<b><code>mdify view</code></b> on the Mean Well LRS-350 bundle; a bundle with a stored archive shows a "
+    add(command(f"uv run --directory /home/bam/markdownify markdownify view {LRS350_BUNDLE}",
+                "<b><code>markdownify view</code></b> on the Mean Well LRS-350 bundle; a bundle with a stored archive shows a "
                 "<i>Full archive</i> button"))
     add(command("uv run --directory /home/bam/markdownify python /home/bam/markdownify/docs/build_report_2026_11_05.py",
                 "<b>Rebuild this page</b> — reuses its encoded videos; add <code>--fresh</code> to re-encode"))

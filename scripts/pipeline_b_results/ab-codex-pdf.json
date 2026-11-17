@@ -1,11 +1,11 @@
 {
  "key": "vlm-ab-codex",
- "command": "uv run python -m mdify.vlm {source} --out {bundle} --model codex --place words",
+ "command": "uv run python -m markdownify.vlm {source} --out {bundle} --model codex --place words",
  "arm": "pdf",
  "ran_at": "2026-10-29T21:32:18Z",
  "cases": {
   "01-prose-spec": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/01-prose-spec/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/01-prose-spec/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/01-prose-spec/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/01-prose-spec/pdf/bundle --model codex --place words",
    "seconds": 51.309,
    "returncode": 0,
    "scores": {
@@ -44,7 +44,7 @@
    }
   },
   "02-spec-list": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/02-spec-list/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/02-spec-list/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/02-spec-list/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/02-spec-list/pdf/bundle --model codex --place words",
    "seconds": 28.774,
    "returncode": 0,
    "scores": {
@@ -83,7 +83,7 @@
    }
   },
   "03-simple-table": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/03-simple-table/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/03-simple-table/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/03-simple-table/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/03-simple-table/pdf/bundle --model codex --place words",
    "seconds": 38.635,
    "returncode": 0,
    "scores": {
@@ -127,7 +127,7 @@
    }
   },
   "04-multi-model": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/04-multi-model/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/04-multi-model/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/04-multi-model/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/04-multi-model/pdf/bundle --model codex --place words",
    "seconds": 56.644,
    "returncode": 0,
    "scores": {
@@ -171,7 +171,7 @@
    }
   },
   "05-merged-header": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/05-merged-header/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/05-merged-header/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/05-merged-header/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/05-merged-header/pdf/bundle --model codex --place words",
    "seconds": 39.442,
    "returncode": 0,
    "scores": {
@@ -215,7 +215,7 @@
    }
   },
   "06-units-in-headers": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/06-units-in-headers/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/06-units-in-headers/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/06-units-in-headers/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/06-units-in-headers/pdf/bundle --model codex --place words",
    "seconds": 34.962,
    "returncode": 0,
    "scores": {
@@ -259,7 +259,7 @@
    }
   },
   "07-footnotes": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/07-footnotes/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/07-footnotes/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/07-footnotes/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/07-footnotes/pdf/bundle --model codex --place words",
    "seconds": 34.847,
    "returncode": 0,
    "scores": {
@@ -303,7 +303,7 @@
    }
   },
   "08-two-column": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/08-two-column/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/08-two-column/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/08-two-column/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/08-two-column/pdf/bundle --model codex --place words",
    "seconds": 78.477,
    "returncode": 0,
    "scores": {
@@ -347,7 +347,7 @@
    }
   },
   "09-intended-drops": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/09-intended-drops/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/09-intended-drops/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/09-intended-drops/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/09-intended-drops/pdf/bundle --model codex --place words",
    "seconds": 46.767,
    "returncode": 0,
    "scores": {
@@ -394,7 +394,7 @@
    }
   },
   "10-torque-speed-plot": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/10-torque-speed-plot/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/10-torque-speed-plot/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/10-torque-speed-plot/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/10-torque-speed-plot/pdf/bundle --model codex --place words",
    "seconds": 45.669,
    "returncode": 0,
    "scores": {
@@ -445,7 +445,7 @@
    }
   },
   "11-mixed-chinese": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/11-mixed-chinese/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/11-mixed-chinese/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/11-mixed-chinese/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/11-mixed-chinese/pdf/bundle --model codex --place words",
    "seconds": 38.932,
    "returncode": 0,
    "scores": {
@@ -489,7 +489,7 @@
    }
   },
   "12-full-datasheet": {
-   "command": "uv run python -m mdify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/12-full-datasheet/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/12-full-datasheet/pdf/bundle --model codex --place words",
+   "command": "uv run python -m markdownify.vlm /home/bam/markdownify/harness/out/runs/vlm-ab-codex/12-full-datasheet/pdf/input/source.pdf --out /home/bam/markdownify/harness/out/runs/vlm-ab-codex/12-full-datasheet/pdf/bundle --model codex --place words",
    "seconds": 49.452,
    "returncode": 0,
    "scores": {

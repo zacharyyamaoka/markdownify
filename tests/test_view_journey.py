@@ -1,11 +1,11 @@
-"""`mdify view` in headless Chromium on real bundles. Every check is a measurement — getBoundingClientRect against a
+"""`markdownify view` in headless Chromium on real bundles. Every check is a measurement — getBoundingClientRect against a
 rectangle computed here from the bundle's own index.json (or the browser's own Range, for a web page) — never "the
 element exists". Skips when Chromium or the bundles are not on this machine.
 
     uv run pytest tests/test_view_journey.py -s          # the measured journey
     uv run python tests/test_view_journey.py --media     # + the hero video and screenshots in reports/media/view/
 
-The bundles are Markdownify's cache entries (CONTRACT §2), made with `mdify <source>`: the Mean Well LRS-350 and TI
+The bundles are Markdownify's cache entries (CONTRACT §2), made with `markdownify <source>`: the Mean Well LRS-350 and TI
 TPS54331 datasheets, and the CubeMars AK80-9 product page (source-highlighter's demo/assets/cubemars-ak80-9.html).
 """
 
@@ -45,8 +45,8 @@ def _have(bundle: pathlib.Path) -> bool:
 
 class Viewer:
     def __init__(self, bundle: pathlib.Path, port: int = 0):
-        mdify = pathlib.Path(sys.executable).with_name("mdify")
-        self.process = subprocess.Popen([str(mdify), "view", str(bundle), "--port", str(port)], stdout=subprocess.PIPE,
+        markdownify = pathlib.Path(sys.executable).with_name("markdownify")
+        self.process = subprocess.Popen([str(markdownify), "view", str(bundle), "--port", str(port)], stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT, text=True, stdin=subprocess.DEVNULL)
         lines = []
         deadline = time.monotonic() + 30
@@ -59,7 +59,7 @@ class Viewer:
                 self.url = line.strip()
                 return
         self.stop()
-        raise RuntimeError(f"mdify view did not print its URL: {''.join(lines)}")
+        raise RuntimeError(f"markdownify view did not print its URL: {''.join(lines)}")
 
     def stop(self) -> None:
         if self.process.poll() is None:
@@ -527,7 +527,7 @@ def record_media() -> None:
     at = word_in_cell(index, cell)
     efficiency = next(block for block in index["blocks"] if block["type"] == "table_cell"
                       and markdown[block["range"]["start"]:block["range"]["end"]] == "89%")
-    scratch = pathlib.Path(tempfile.mkdtemp(prefix="mdify-view-media-"))
+    scratch = pathlib.Path(tempfile.mkdtemp(prefix="markdownify-view-media-"))
     viewer = Viewer(LRS)
     try:
         with playwright_api.sync_playwright() as playwright:

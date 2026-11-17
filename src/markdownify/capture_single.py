@@ -4,7 +4,7 @@ CSP that blocks every fetch — so it renders offline with nothing beside it. A 
 `source.html` stays the bytes values cite.
 
 WHY a second visit, built only when asked: SingleFile drives a browser of its own, so this level costs the site a
-second page view, where every other level comes free from the one visit `mdify.capture_browser` makes. It goes through
+second page view, where every other level comes free from the one visit `markdownify.capture_browser` makes. It goes through
 the same gate first (`Fetcher.permit`: refused hosts, robots.txt, one request per second per host), it never contacts
 a refused host from inside the page (`--blocked-url-pattern`), and it identifies itself with the visit's own user
 agent. What it cannot do is re-check a frame's or a redirect's robots.txt inside the page, as the main visit does.

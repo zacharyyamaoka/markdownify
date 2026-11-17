@@ -5,7 +5,7 @@ import io
 
 from PIL import Image
 
-from mdify import bundle, cache, fetch, image
+from markdownify import bundle, cache, fetch, image
 
 
 def webp_bytes() -> bytes:
@@ -22,4 +22,4 @@ def test_webp_is_citable_cached_and_converted_by_the_image_path():
     assert "image/webp" in fetch.CITABLE_MEDIA_TYPES
     assert cache.extension_of("image/webp") == "webp"
     assert "image/webp" in image.MEDIA_TYPES
-    assert bundle.converter_for("image/webp").__name__ == "mdify.image"
+    assert bundle.converter_for("image/webp").__name__ == "markdownify.image"

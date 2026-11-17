@@ -1,8 +1,8 @@
 {
-  "name": "mdify-singlefile",
+  "name": "markdownify-singlefile",
   "version": "0.1.0",
   "private": true,
-  "description": "The `single` capture level of `mdify capture`: SingleFile's stock CLI saves the rendered page as one HTML file with its CSS, images and fonts inlined.",
+  "description": "The `single` capture level of `markdownify capture`: SingleFile's stock CLI saves the rendered page as one HTML file with its CSS, images and fonts inlined.",
   "license": "MIT",
   "dependencies": {
     "single-file-cli": "2.23.0"

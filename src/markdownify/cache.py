@@ -11,7 +11,7 @@ Layout:
     bundles/<sha256>/source.<ext>   the bytes exactly as fetched (or as read from a local file)
     bundles/<sha256>/source.json    {sha256, bytes, media_type, retrievals: [{url, final_url, retrieved_at,
                                      http_status, ...}]} — robotparts' blob sidecar shape
-    bundles/<sha256>/…              the rest of the bundle (CONTRACT §2), written by `mdify.bundle`
+    bundles/<sha256>/…              the rest of the bundle (CONTRACT §2), written by `markdownify.bundle`
     fetches.jsonl                   append-only log of every request the fetcher made (robots.txt included)
     robots/<host>.json              robots.txt as last read, per host; robots/<host>.last the last request's time
 

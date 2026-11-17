@@ -3,13 +3,13 @@
 - **OCR:** RapidOCR (PP-OCR models on onnxruntime), which docling ships an adapter for and which runs here without a
   system install; full-page OCR, because an image has no text layer to prefer.
 - **Structure:** docling's layout model and TableFormer, the same as for a PDF, so the same serializer
-  (`mdify.docling_markdown`) writes the markdown.
+  (`markdownify.docling_markdown`) writes the markdown.
 - **Align:** markdown words are aligned to the OCR lines; a word's box is its slice of the line's box, in
   proportion to its characters (OCR gives line boxes, not character boxes).
 
 Inventory: none in v0 (CONTRACT §5) — the only words an image has are the OCR's own, and grading the OCR against
 itself would prove nothing. Ground truth for synthetic pages belongs to the harness. `text_under` likewise has no
-independent text to return, so `mdify check` reports invariant 1 as not checkable for images.
+independent text to return, so `markdownify check` reports invariant 1 as not checkable for images.
 """
 
 from __future__ import annotations

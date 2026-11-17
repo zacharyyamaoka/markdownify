@@ -1,4 +1,4 @@
-"""mdify.html on a small maker-style page whose answers are known, plus the real CubeMars pages in robotparts'
+"""markdownify.html on a small maker-style page whose answers are known, plus the real CubeMars pages in robotparts'
 ingest cache when this machine has them. Run: uv run pytest tests/test_html.py"""
 
 from __future__ import annotations
@@ -10,9 +10,9 @@ import subprocess
 
 import pytest
 
-from mdify import html as mdify_html
-from mdify.align import markdown_words, normalize
-from mdify.converters import Source
+from markdownify import html as markdownify_html
+from markdownify.align import markdown_words, normalize
+from markdownify.converters import Source
 
 # A product page shaped like CubeMars': a header + nav listing the whole catalogue, a spec table with a row header
 # column and a merged cell, a footer. Non-ASCII and an emoji come first so code points and UTF-16 units disagree,
@@ -62,7 +62,7 @@ def page_source(tmp_path_factory) -> Source:
 
 @pytest.fixture(scope="module")
 def conversion(page_source):
-    return mdify_html.convert(page_source)
+    return markdownify_html.convert(page_source)
 
 
 def _word_texts(conversion):
@@ -76,19 +76,19 @@ def test_every_markdown_word_is_linked_and_faithful(page_source, conversion):
         markdown_text = texts[word["range"]["start"]]
         assert word["grounding"] is not None, markdown_text
         assert word["score"] == 1.0, markdown_text
-        assert normalize(mdify_html.text_under(page_source, word["grounding"])) == normalize(markdown_text)
+        assert normalize(markdownify_html.text_under(page_source, word["grounding"])) == normalize(markdown_text)
 
 
 def test_svg_labels_are_visible_words_in_a_flagged_figure(page_source, conversion):
     """An svg's drawn <text> is visible, so it is in the inventory; Defuddle keeps the svg as raw HTML, which is not
     a conversion of the drawing, so its block is a figure with represented: false. Its labels still point at the
     svg's <text>, its <title> tooltip is not a word."""
-    decoded = mdify_html.decoded_html(page_source)
+    decoded = markdownify_html.decoded_html(page_source)
     texts = _word_texts(conversion)
     located = {texts[word["range"]["start"]]: word["grounding"]["html"] for word in conversion.words}
     assert located["Speed"]["xpath"].endswith("/svg/text[1]")
     assert decoded[located["Speed"]["source_range"]["start"]:located["Speed"]["source_range"]["end"]] == "Speed"
-    inventory_words = {word.text for word in mdify_html.inventory(page_source)}
+    inventory_words = {word.text for word in markdownify_html.inventory(page_source)}
     assert "Speed" in inventory_words and "Tooltip" not in inventory_words
     figures = [block for block in conversion.blocks if block["type"] == "figure"]
     assert len(figures) == 1 and figures[0]["represented"] is False
@@ -98,7 +98,7 @@ def test_svg_labels_are_visible_words_in_a_flagged_figure(page_source, conversio
 
 
 def test_ranges_are_code_points_into_the_decoded_html(page_source, conversion):
-    decoded = mdify_html.decoded_html(page_source)
+    decoded = markdownify_html.decoded_html(page_source)
     texts = _word_texts(conversion)
     by_text = {texts[word["range"]["start"]]: word for word in conversion.words}
     rated = by_text["Rated"]["grounding"]["html"]["source_range"]
@@ -109,7 +109,7 @@ def test_ranges_are_code_points_into_the_decoded_html(page_source, conversion):
 
 
 def test_inline_markup_does_not_split_a_word(page_source):
-    words = [word.text for word in mdify_html.inventory(page_source)]
+    words = [word.text for word in markdownify_html.inventory(page_source)]
     assert "10:1" in words          # <b>10</b>:1 reads as one word on screen
 
 
@@ -125,7 +125,7 @@ def test_navigation_menu_and_footer_are_dropped_with_reasons(page_source, conver
         assert name not in conversion.markdown
     reasons = {drop["reason"] for drop in conversion.dropped}
     assert {"navigation", "footer"} <= reasons or {"header", "footer"} <= reasons
-    decoded = mdify_html.decoded_html(page_source)
+    decoded = markdownify_html.decoded_html(page_source)
     menu_entry = decoded.index("AKE90-8 KV35")
     covering = [drop for drop in conversion.dropped
                 if drop["grounding"]["html"]["source_range"]["start"] <= menu_entry < drop["grounding"]["html"]["source_range"]["end"]]
@@ -142,7 +142,7 @@ def test_a_table_row_classed_header_is_kept(tmp_path):
     path = tmp_path / "source.html"
     path.write_text(page, encoding="utf-8")
     source = Source(path, hashlib.sha256(page.encode()).hexdigest(), "text/html", URL)
-    conversion = mdify_html.convert(source)
+    conversion = markdownify_html.convert(source)
     assert "| Model | Rated torque (N·m) |" in conversion.markdown
     cells = [block for block in conversion.blocks if block["type"] == "table_cell"]
     headers = [conversion.markdown[cell["range"]["start"]:cell["range"]["end"]] for cell in cells if cell["kind"] == "columnHeader"]
@@ -150,7 +150,7 @@ def test_a_table_row_classed_header_is_kept(tmp_path):
 
 
 def test_inventory_is_visible_text_only(page_source):
-    words = [word.text for word in mdify_html.inventory(page_source)]
+    words = [word.text for word in markdownify_html.inventory(page_source)]
     assert "Hidden" not in words           # inline display:none
     assert "AK10-9\";" not in words and "menu" not in words   # <script>
     assert "Revealed" in words             # visibility:hidden is a scroll-reveal state, read as visible
@@ -205,10 +205,10 @@ const { html, url } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
 const result = await Defuddle(parseLinkedomHTML(html, url), url, { markdown: true, useAsync: false });
 process.stdout.write(result.content);
 """
-    payload = json.dumps({"html": mdify_html.decoded_html(page_source), "url": URL}).encode()
-    run = subprocess.run([mdify_html.NODE, "--input-type=module", "-e", script], input=payload, capture_output=True,
-                         cwd=mdify_html.TOOL.parent, check=True)
-    assert run.stdout.decode("utf-8") == mdify_html.convert(page_source, reader=True).markdown
+    payload = json.dumps({"html": markdownify_html.decoded_html(page_source), "url": URL}).encode()
+    run = subprocess.run([markdownify_html.NODE, "--input-type=module", "-e", script], input=payload, capture_output=True,
+                         cwd=markdownify_html.TOOL.parent, check=True)
+    assert run.stdout.decode("utf-8") == markdownify_html.convert(page_source, reader=True).markdown
 
 
 # --- conservative content mode (the default) ----------------------------------------------------------------------
@@ -245,7 +245,7 @@ def _drop_reason_at(conversion, decoded, text):
 
 
 def test_default_mode_keeps_spec_tabs_lists_and_revealed_text(datasheet_source):
-    conversion = mdify_html.convert(datasheet_source)
+    conversion = markdownify_html.convert(datasheet_source)
     for kept in ("AK10-9 Robotic Actuator", "Specification", "| Rated torque | 18 N·m |", "Dual absolute encoders",
                  "CAN 2.0B and UART", "额定扭矩：3Nm 峰值扭矩：7Nm", "planetary actuator"):
         assert kept in conversion.markdown, kept
@@ -253,8 +253,8 @@ def test_default_mode_keeps_spec_tabs_lists_and_revealed_text(datasheet_source):
 
 
 def test_default_mode_drops_only_with_a_known_reason(datasheet_source):
-    conversion = mdify_html.convert(datasheet_source)
-    decoded = mdify_html.decoded_html(datasheet_source)
+    conversion = markdownify_html.convert(datasheet_source)
+    decoded = markdownify_html.decoded_html(datasheet_source)
     assert "AKE90-8" not in conversion.markdown and "Copyright" not in conversion.markdown
     assert "Related products" not in conversion.markdown
     assert _drop_reason_at(conversion, decoded, "<header><nav>") == ["header"]
@@ -276,7 +276,7 @@ def test_default_mode_keeps_the_title_heading_and_footnotes_as_written(tmp_path)
     path = tmp_path / "source.html"
     path.write_text(page, encoding="utf-8")
     source = Source(path, hashlib.sha256(page.encode()).hexdigest(), "text/html", URL)
-    conversion = mdify_html.convert(source)
+    conversion = markdownify_html.convert(source)
     assert conversion.markdown.startswith("## KM80-9 Performance")
     assert "[^" not in conversion.markdown
     assert "<sup>1</sup> Measured at 25 °C" in conversion.markdown
@@ -284,8 +284,8 @@ def test_default_mode_keeps_the_title_heading_and_footnotes_as_written(tmp_path)
 
 
 def test_reader_mode_is_defuddles_judgement(datasheet_source):
-    reader = mdify_html.convert(datasheet_source, reader=True)
-    default = mdify_html.convert(datasheet_source)
+    reader = markdownify_html.convert(datasheet_source, reader=True)
+    default = markdownify_html.convert(datasheet_source)
     assert len(reader.words) < len(default.words)
 
 
@@ -313,7 +313,7 @@ def test_cubemars_alt_text_written_as_a_caption_points_at_the_alt_attribute():
     source = _cached(CUBEMARS_PAGES[1])
     if source is None:
         pytest.skip("robotparts ingest cache not on this machine")
-    conversion = mdify_html.convert(source)
+    conversion = markdownify_html.convert(source)
     texts = _word_texts(conversion)
     fully = [word["grounding"]["html"]["xpath"] for word in conversion.words
              if texts[word["range"]["start"]] == "Fully" and word["grounding"]]
@@ -326,8 +326,8 @@ def test_cubemars_catalogue_menu_is_dropped_as_navigation(prefix):
     source = _cached(prefix)
     if source is None:
         pytest.skip("robotparts ingest cache not on this machine")
-    conversion = mdify_html.convert(source)
-    decoded = mdify_html.decoded_html(source)
+    conversion = markdownify_html.convert(source)
+    decoded = markdownify_html.decoded_html(source)
     navigation = [drop["grounding"]["html"]["source_range"] for drop in conversion.dropped if drop["reason"] == "navigation"]
     menu = decoded.index("<nav")
     assert any(span["start"] <= menu < span["end"] for span in navigation)
@@ -336,5 +336,5 @@ def test_cubemars_catalogue_menu_is_dropped_as_navigation(prefix):
     texts = _word_texts(conversion)
     for word in conversion.words:
         if word["grounding"] is not None and word["score"] == 1.0:
-            under = normalize(mdify_html.text_under(source, word["grounding"]))
+            under = normalize(markdownify_html.text_under(source, word["grounding"]))
             assert under == normalize(texts[word["range"]["start"]])

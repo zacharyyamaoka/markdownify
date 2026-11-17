@@ -1,4 +1,4 @@
-/* mdify view. Calm: one answer first, detail on demand; amber only for what misses its target, red only for errors. */
+/* markdownify view. Calm: one answer first, detail on demand; amber only for what misses its target, red only for errors. */
 :root {
   --bg: #ffffff;
   --fg: #1f2328;

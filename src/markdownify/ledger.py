@@ -3,7 +3,7 @@
 WHY here and not in the converters: the ledger is the grade, and a converter must not grade itself. The core
 computes it from two things only — the span index the converter produced, and the source inventory, which each
 converter module reads WITHOUT its own conversion code path (`inventory()`: pdfplumber words for a PDF, the page's
-visible text nodes for HTML). `mdify check` calls the same `fates_of` on the saved index to re-derive invariant 3.
+visible text nodes for HTML). `markdownify check` calls the same `fates_of` on the saved index to re-derive invariant 3.
 
 A source word's fate is decided by geometry, not by the aligner's bookkeeping, so any converter's index can be graded:
 - `linked`: some markdown word's grounding overlaps it (boxes: the overlap covers at least half of the smaller box;

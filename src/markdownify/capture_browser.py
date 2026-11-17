@@ -1,9 +1,9 @@
-"""The one browser visit behind `mdify capture` (CONTRACT §2.1): open the page in headless Chromium, record every
+"""The one browser visit behind `markdownify capture` (CONTRACT §2.1): open the page in headless Chromium, record every
 response as it arrives, scroll to the bottom as a reader would, then measure every visible word's box and take the
-full-page JPEG and the PDF. Nothing here writes files; `mdify.capture` turns a `Visit` into the capture levels.
+full-page JPEG and the PDF. Nothing here writes files; `markdownify.capture` turns a `Visit` into the capture levels.
 
 WHY a real browser and not the fetcher: the snapshot and the archive are "what a reader saw", which only exists after
-the page's CSS, scripts and lazy images have run. The fetcher's rules still hold for the page itself — `mdify.capture`
+the page's CSS, scripts and lazy images have run. The fetcher's rules still hold for the page itself — `markdownify.capture`
 asks `Fetcher.permit` (refused hosts, robots.txt, one request per second per host) before the visit — and every
 document navigation inside the visit (a redirect hop, a frame) is checked against robots.txt again here. The page's
 own sub-resources (CSS, JS, images, fonts) are fetched when the page asks for them, unthrottled: that is one page
@@ -13,11 +13,11 @@ Recording: every request the page makes goes through one route handler that fetc
 and body, and answers the page with exactly those bytes (`visit.record` says why). A redirect's target, which
 Playwright does not route, is recorded when it finishes (`visit.on_ended`).
 
-Word boxes come from the same walk the HTML inventory makes (`html_tool/mdify_html.mjs` `Page.inventory`): the same
+Word boxes come from the same walk the HTML inventory makes (`html_tool/markdownify_html.mjs` `Page.inventory`): the same
 invisible tags, the same markup-only hiding, words joined across inline elements and split at every other element,
 each keyed by its xpath and its ordinal among the words of that xpath. WHY the same walk: the browser parses the
 delivered bytes with the same HTML5 algorithm jsdom uses, so for a page its scripts did not rebuild the keys line up
-one to one with the inventory's words, and `mdify.capture_snapshot` joins a converter word to its box by xpath and
+one to one with the inventory's words, and `markdownify.capture_snapshot` joins a converter word to its box by xpath and
 offset instead of by guessing from text.
 """
 
@@ -37,7 +37,7 @@ NAVIGATION_TIMEOUT_MS = 60_000
 SETTLE_TIMEOUT_MS = 10_000                  # network idle after load / after scrolling, at most this long
 SCROLL_STEP_PAUSE_MS = 250
 SCROLL_MAX_STEPS = 80                       # 64 000 px at 800 px a step; a longer page keeps its unscrolled tail
-USER_AGENT_SUFFIX = "mdify-capture/0.1 (+https://robotparts.dev/)"
+USER_AGENT_SUFFIX = "markdownify-capture/0.1 (+https://robotparts.dev/)"
 
 
 @dataclasses.dataclass
@@ -77,7 +77,7 @@ class Visit:
     title: str
 
 
-# The inventory walk of html_tool/mdify_html.mjs, run in the live page, measuring as it goes. Keep the two in step:
+# The inventory walk of html_tool/markdownify_html.mjs, run in the live page, measuring as it goes. Keep the two in step:
 # INVISIBLE_TAGS, INLINE_TAGS and the inline display:none rule are copied from there.
 _WALK_JS = r"""
 () => {
@@ -388,7 +388,7 @@ def visit(url: str, fetcher: Fetcher, *, log=None) -> Visit:
                 message = str(error).splitlines()[0]
                 if "Download is starting" in message:
                     raise FetchRefused(f"{url} is not a web page (the browser downloads it); "
-                                       f"use `mdify {url}` for a PDF or an image") from error
+                                       f"use `markdownify {url}` for a PDF or an image") from error
                 raise
             if response is None:
                 raise FetchRefused(f"{url}: the browser got no response")

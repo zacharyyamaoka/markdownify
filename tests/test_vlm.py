@@ -1,4 +1,4 @@
-"""Pipeline B (mdify.vlm) without a model: the markdown it assembles from a reply, the word boxes it splits out of
+"""Pipeline B (markdownify.vlm) without a model: the markdown it assembles from a reply, the word boxes it splits out of
 line boxes, the scores (text layer or `null`), the CLI event parsers, and a whole bundle with the CLI call faked.
 The real model runs are the harness's (scripts/pipeline_b_results/)."""
 
@@ -7,8 +7,8 @@ import pathlib
 
 import pytest
 
-from mdify import align, check, vlm, vlm_llm
-from mdify.cache import Cache
+from markdownify import align, check, vlm, vlm_llm
+from markdownify.cache import Cache
 
 pymupdf = pytest.importorskip("pymupdf")
 
@@ -314,8 +314,8 @@ def test_codex_gets_absolute_paths_from_a_relative_run_dir(tmp_path, monkeypatch
 
 def test_a_ragged_reply_table_is_written_on_a_rectangular_grid(tmp_path, monkeypatch):
     """A model's cells with a hole at (0, 1) and two cells on (2, 0): written row by row, row 0's "Peak" slid one
-    column left (under "Rated"); `mdify.tables.html_table` keeps every cell at its own column, and the bundle passes
-    `mdify check` invariant 4 (which refuses ragged tables)."""
+    column left (under "Rated"); `markdownify.tables.html_table` keeps every cell at its own column, and the bundle passes
+    `markdownify check` invariant 4 (which refuses ragged tables)."""
     from PIL import Image
 
     image = tmp_path / "in.png"

@@ -1,8 +1,8 @@
 {
-  "name": "mdify-scoop-trial",
+  "name": "markdownify-scoop-trial",
   "version": "0.1.0",
   "private": true,
-  "description": "Trial of Harvard LIL's Scoop as the engine under `mdify capture`'s archive level, not adopted (docs/research/2026-11-05-capture-trial.md). pnpm-workspace.yaml denies Scoop's postinstall (it downloads yt-dlp and crip, which the trial does not use) and Playwright's browser download (its Chromium headless shell 1243 is already in ~/.cache/ms-playwright).",
+  "description": "Trial of Harvard LIL's Scoop as the engine under `markdownify capture`'s archive level, not adopted (docs/research/2026-11-05-capture-trial.md). pnpm-workspace.yaml denies Scoop's postinstall (it downloads yt-dlp and crip, which the trial does not use) and Playwright's browser download (its Chromium headless shell 1243 is already in ~/.cache/ms-playwright).",
   "license": "MIT",
   "dependencies": {
     "@harvard-lil/scoop": "0.7.0",

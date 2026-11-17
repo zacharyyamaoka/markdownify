@@ -1,7 +1,7 @@
-# Capture trial: `mdify capture` vs SingleFile vs Scoop (2026-11-05)
+# Capture trial: `markdownify capture` vs SingleFile vs Scoop (2026-11-05)
 
 **Verdict.** SingleFile is adopted as a new capture level, `single`. Scoop is not adopted: our recorder stays. ReplayWeb.page
-is vendored behind one "Full archive" button in `mdify view`.
+is vendored behind one "Full archive" button in `markdownify view`.
 
 - **SingleFile** writes one HTML file that renders offline with no network request at all. Its copy is a second
   visit, not the same instant, so its pixel difference from our snapshot is visit-to-visit change (a video gallery's
@@ -14,7 +14,7 @@ is vendored behind one "Full archive" button in `mdify view`.
   word boxes: it has no hook into its page. That misses the bar we set, "at least as good on completeness and
   replay, keeping our politeness gate".
 - **ReplayWeb.page** replays both our archives and Scoop's offline with zero requests off the machine. On CubeMars
-  that was verified through the real `mdify view` button.
+  that was verified through the real `markdownify view` button.
 
 Everything below was measured on 2026-11-05 between 20:03 and 20:21 UTC. Each tool visited each page once (after
 `Fetcher.permit`: robots.txt, then one request per second per host). Everything after that ran offline. The harness is
@@ -30,7 +30,7 @@ JSON per stage) are outside git, in `~/.cache/markdownify/trial-2026-11-05/`.
 
 ## The comparison
 
-Pixel difference is the share of pixels with any channel off by more than 40 (`mdify.capture_replay.compare`),
+Pixel difference is the share of pixels with any channel off by more than 40 (`markdownify.capture_replay.compare`),
 measured against our `snapshot.jpg` (1280 px wide, full page) of the same day.
 
 | page | tool | size | time | offline replay vs snapshot | completeness |
@@ -45,7 +45,7 @@ measured against our `snapshot.jpg` (1280 px wide, full page) of the same day.
 | moteus | SingleFile | 160 KB | 7.7 s | 0.00 % | one file; 0 requests offline |
 | moteus | Scoop | 424 KB (128 KB screenshot) | 2.2 s | 0.00 % | 19 responses |
 
-\* Ours is the whole `mdify capture` with every level. That is the visit, the snapshot with word boxes, the PDF, the
+\* Ours is the whole `markdownify capture` with every level. That is the visit, the snapshot with word boxes, the PDF, the
 WACZ and its verification, plus the conversion (3.6 / 1.4 / 1.0 s of the total).
 † SingleFile waits for network idle, which never came on CubeMars (trackers poll), so it waited its 60 s limit.
 ‡ Our replayer (`capture_replay`) answers only exact URLs, with the capture's clock. Scoop's page `ts` is not when
@@ -80,7 +80,7 @@ archive" tab, a few seconds later, the modal is there as captured (`shots/archiv
   - the sign-up modal and the cookie banner are kept, as rendered.
 - **eRob80:** identical down to y = 3 823 px. Below that, a section has a different height.
 
-## What the converter makes of a SingleFile copy (`mdify <single.html>`, then `mdify check`)
+## What the converter makes of a SingleFile copy (`markdownify <single.html>`, then `markdownify check`)
 
 - **moteus:** PASS on all five invariants. It links 234 words, the same 234 that `source.html` links.
 - **CubeMars and eRob80:** the conversion didn't finish. CubeMars was stopped after 15 min, eRob80 after 12 min.
@@ -91,7 +91,7 @@ archive" tab, a few seconds later, the modal is there as captured (`shots/archiv
 - **Consequence:** `single.html` is a display copy only. Values keep citing `source.html` (CONTRACT §2.1).
 - **If the converter should ever read it:** strip `data:` URLs from the markdown before the diff. That is in
   `html.py`, outside this change.
-- **Baseline for comparison:** our own eRob80 bundle fails `mdify check` invariant 4 too (a table row spills into a
+- **Baseline for comparison:** our own eRob80 bundle fails `markdownify check` invariant 4 too (a table row spills into a
   third column). That failure was there before this change.
 
 ## Politeness
@@ -103,7 +103,7 @@ archive" tab, a few seconds later, the modal is there as captured (`shots/archiv
 | robots.txt on redirects and frames inside the visit | yes | no | no |
 | refused hosts (McMaster, Octopart) blocked inside the page | yes (route) | yes (`--blocked-url-pattern`) | possible (its `blocklist` takes regexes) |
 | extra requests | none | its own second visit; at most 6 parallel per host | one request for the page outside the browser before the visit; behaviours fetch extra `srcset` images |
-| user agent | the real Chromium UA + `mdify-capture/0.1 (+https://robotparts.dev/)` | the same string | a Windows Chrome UA + our suffix |
+| user agent | the real Chromium UA + `markdownify-capture/0.1 (+https://robotparts.dev/)` | the same string | a Windows Chrome UA + our suffix |
 | SSRF guard | refused hosts only | none | private-IP blocklist |
 
 ## Code Scoop would replace

@@ -26,8 +26,8 @@ import shutil
 import subprocess
 import time
 
-CLAUDE_BIN = os.environ.get("MDIFY_CLAUDE", "/home/bam/.local/bin/claude")
-CODEX_BIN = os.environ.get("MDIFY_CODEX", "/home/bam/.local/bin/codex")
+CLAUDE_BIN = os.environ.get("MARKDOWNIFY_CLAUDE", "/home/bam/.local/bin/claude")
+CODEX_BIN = os.environ.get("MARKDOWNIFY_CODEX", "/home/bam/.local/bin/codex")
 DEFAULT_MODELS = {"claude": "claude-opus-5-5", "codex": "gpt-6.1-sol"}
 CODEX_EFFORT = "high"
 TIMEOUT_S = 1800

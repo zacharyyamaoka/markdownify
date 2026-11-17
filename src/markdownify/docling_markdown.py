@@ -10,7 +10,7 @@ What it writes:
 - headings (`#` for the title, `##`… for section headers by level), paragraphs, captions, footnotes, list items
   (nested by their list groups), fenced code;
 - tables as GFM pipe tables — or, when a cell spans rows or columns (GFM cannot hold that), as a raw HTML `<table>`
-  with rowspan/colspan on a rectangular grid (`mdify.tables`; CONTRACT §2); every cell is a `table_cell` block with
+  with rowspan/colspan on a rectangular grid (`markdownify.tables`; CONTRACT §2); every cell is a `table_cell` block with
   docling's own row/col/span and its header `kind`;
 - pictures as `figure` blocks with `represented: false` and their box, and no markdown (CONTRACT §3.1): the words
   inside them are counted as flagged, not lost;
@@ -18,7 +18,7 @@ What it writes:
 - a block's or cell's words in the order the page prints them (`reading_order`: lines by their boxes, top to bottom,
   left to right), when docling's text is exactly the source words inside its box in another order.
 
-Then every markdown word is aligned (mdify.align) to the source text units the caller supplies — pdfplumber words
+Then every markdown word is aligned (markdownify.align) to the source text units the caller supplies — pdfplumber words
 for a PDF, OCR lines for an image — block by block: a cell's words against the units inside the cell's box, a
 paragraph's against the units inside its box, then whatever is left per page.
 """
@@ -85,7 +85,7 @@ _ENTITY_START = re.compile(r"&(#[0-9]+|#[xX][0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]*);"
 
 def escape_text(text: str, *, in_table: bool = False) -> str:
     """Escape what markdown would otherwise read as syntax, so the text a reader sees is the source's text and
-    mdify.align counts it as content. Kept minimal (readability): only characters that are syntax where they sit."""
+    markdownify.align counts it as content. Kept minimal (readability): only characters that are syntax where they sit."""
     out: list[str] = []
     for index, character in enumerate(text):
         before = text[index - 1] if index else " "
@@ -395,7 +395,7 @@ class _Serializer:
         return blocks
 
     def html_table(self, cells, data, page_no, has_row_headers) -> list[dict]:
-        # WHY mdify.tables: docling's cells are not always a grid (a slot nothing covers, a span over another
+        # WHY markdownify.tables: docling's cells are not always a grid (a slot nothing covers, a span over another
         # cell); written row by row they shifted LRS-350's model names one column off their values.
         grid_cells = [GridCell(cell.start_row_offset_idx, cell.start_col_offset_idx, cell.row_span, cell.col_span,
                                bool(cell.column_header or cell.row_header),

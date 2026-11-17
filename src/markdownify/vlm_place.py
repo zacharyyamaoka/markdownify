@@ -1,4 +1,4 @@
-"""Pipeline AB (`python -m mdify.vlm … --place words`): the model writes the markdown and its line boxes; the source's
+"""Pipeline AB (`python -m markdownify.vlm … --place words`): the model writes the markdown and its line boxes; the source's
 own words place each markdown word inside its line.
 
 WHY (measured 2026-10-29, scripts/pipeline_b_diagnose.py): every one of pipeline B's misplaced words — 125 of 1842
@@ -10,7 +10,7 @@ becomes the search window:
 - **Source words:** a PDF's text layer (pdfplumber words with their character boxes, as pipeline A reads them); a
   page image, an image-only PDF or an HTML screenshot has none, so RapidOCR (the engine docling ships, already
   installed) reads word boxes off the same page image the model saw (`return_word_box=True`).
-- **Window:** each line's (or cell's) markdown words are aligned (`mdify.align.align_word_spans`, the same aligner
+- **Window:** each line's (or cell's) markdown words are aligned (`markdownify.align.align_word_spans`, the same aligner
   as pipeline A) to the source words that overlap its box; words still unplaced then try the source words of their
   whole block (a line box the model drew a little short). No page-wide pass: a word never finds a twin elsewhere.
 - **Box:** the union of the characters it matched (`docling_markdown.box_of_characters`: exact character boxes from

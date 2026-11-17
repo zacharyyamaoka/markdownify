@@ -1,11 +1,11 @@
-"""The capture trial of 2026-11-05 (docs/research/2026-11-05-capture-trial.md): `mdify capture` vs SingleFile vs
+"""The capture trial of 2026-11-05 (docs/research/2026-11-05-capture-trial.md): `markdownify capture` vs SingleFile vs
 Scoop on three pages, one polite visit per tool per page, then everything else offline.
 
     uv run --project /home/bam/markdownify python -I /home/bam/markdownify/tools/scoop/trial.py <stage> [slug...]
 
 Stages that visit the site (each once per page, after `Fetcher.permit`): ours, single, scoop. Offline stages:
-offline_single (single.html rendered with the network blocked), check_single and check_ours (`mdify check`),
-replay_scoop (Scoop's WACZ through `mdify.capture_replay`). rwp_replay.py replays any of the archives through
+offline_single (single.html rendered with the network blocked), check_single and check_ours (`markdownify check`),
+replay_scoop (Scoop's WACZ through `markdownify.capture_replay`). rwp_replay.py replays any of the archives through
 ReplayWeb.page. Results go to $TRIAL_RESULTS (default ~/.cache/markdownify/trial-2026-11-05): <stage>/<slug>/ and
 <stage>.json — raw evidence, kept out of git.
 """
@@ -17,9 +17,9 @@ import subprocess
 import sys
 import time
 
-from mdify import capture, capture_replay
-from mdify.cache import Cache
-from mdify.fetch import Fetcher
+from markdownify import capture, capture_replay
+from markdownify.cache import Cache
+from markdownify.fetch import Fetcher
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 RESULTS = pathlib.Path(os.environ.get("TRIAL_RESULTS") or pathlib.Path.home() / ".cache/markdownify/trial-2026-11-05")
@@ -84,7 +84,7 @@ def scoop(slug, url):
                           "-o", str(out / "source.wacz"), "--json-summary-output", str(out / "summary.json"),
                           "--export-attachments-output", str(out / "attachments"),
                           "--capture-window-x", "1280", "--capture-window-y", "800",
-                          "--user-agent-suffix", " mdify-capture/0.1 (+https://robotparts.dev/)",
+                          "--user-agent-suffix", " markdownify-capture/0.1 (+https://robotparts.dev/)",
                           "--capture-video-as-attachment", "false", "--capture-certificates-as-attachment", "false",
                           "--provenance-summary", "true", "--public-ip-resolver-endpoint", "http://127.0.0.1:9/",
                           "--yt-dlp-path", "/bin/false", "--crip-path", "/bin/false",
@@ -102,7 +102,7 @@ def offline_single(slug, url):
     """Render single.html with the network blocked; pixel difference from our snapshot.jpg."""
     from playwright.sync_api import sync_playwright
 
-    from mdify import capture_browser
+    from markdownify import capture_browser
 
     out = RESULTS / "single" / slug
     blocked = []
@@ -135,14 +135,14 @@ def offline_single(slug, url):
 
 
 def check_single(slug, url):
-    """Convert single.html as a source (`mdify <file>`), then `mdify check` the bundle."""
+    """Convert single.html as a source (`markdownify <file>`), then `markdownify check` the bundle."""
     out = RESULTS / "single" / slug
     bundle_dir = out / os.environ.get("BUNDLE_NAME", "bundle")
     started = time.perf_counter()
-    convert = subprocess.run(["uv", "run", "--project", str(REPO), "mdify", str(out / "single.html"), "--out",
+    convert = subprocess.run(["uv", "run", "--project", str(REPO), "markdownify", str(out / "single.html"), "--out",
                               str(bundle_dir)], capture_output=True, text=True)
     seconds = time.perf_counter() - started
-    check = subprocess.run(["uv", "run", "--project", str(REPO), "mdify", "check", str(bundle_dir)],
+    check = subprocess.run(["uv", "run", "--project", str(REPO), "markdownify", "check", str(bundle_dir)],
                            capture_output=True, text=True)
     kpis = json.loads((bundle_dir / "kpis.json").read_text()) if (bundle_dir / "kpis.json").exists() else None
     (out / "check.log").write_text(convert.stdout + convert.stderr + "\n---\n" + check.stdout + check.stderr)
@@ -152,7 +152,7 @@ def check_single(slug, url):
 
 def check_ours(slug, url):
     out = RESULTS / "ours" / slug
-    check = subprocess.run(["uv", "run", "--project", str(REPO), "mdify", "check", str(out)], capture_output=True,
+    check = subprocess.run(["uv", "run", "--project", str(REPO), "markdownify", "check", str(out)], capture_output=True,
                            text=True)
     kpis = json.loads((out / "kpis.json").read_text())
     return {"check_rc": check.returncode, "check_tail": (check.stdout + check.stderr)[-600:], "kpis": kpis}
@@ -168,7 +168,7 @@ def replay_scoop(slug, url):
     import shutil
     import zipfile
 
-    from mdify import capture_archive
+    from markdownify import capture_archive
 
     out = RESULTS / "scoop" / slug
     pages = [json.loads(line) for line in zipfile.ZipFile(out / "source.wacz").read("pages/pages.jsonl").decode().splitlines()[1:]]

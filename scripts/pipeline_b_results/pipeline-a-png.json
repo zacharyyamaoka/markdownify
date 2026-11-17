@@ -1,11 +1,11 @@
 {
- "key": "mdify",
- "command": "uv run mdify {source} --out {bundle}",
+ "key": "markdownify",
+ "command": "uv run markdownify {source} --out {bundle}",
  "arm": "png",
  "ran_at": "2026-10-29T20:57:25Z",
  "cases": {
   "01-prose-spec": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/01-prose-spec/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/01-prose-spec/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/01-prose-spec/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/01-prose-spec/png/bundle",
    "seconds": 15.053,
    "returncode": 0,
    "scores": {
@@ -44,7 +44,7 @@
    }
   },
   "02-spec-list": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/02-spec-list/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/02-spec-list/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/02-spec-list/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/02-spec-list/png/bundle",
    "seconds": 14.483,
    "returncode": 0,
    "scores": {
@@ -83,7 +83,7 @@
    }
   },
   "03-simple-table": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/03-simple-table/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/03-simple-table/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/03-simple-table/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/03-simple-table/png/bundle",
    "seconds": 15.301,
    "returncode": 0,
    "scores": {
@@ -127,7 +127,7 @@
    }
   },
   "04-multi-model": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/04-multi-model/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/04-multi-model/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/04-multi-model/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/04-multi-model/png/bundle",
    "seconds": 15.232,
    "returncode": 0,
    "scores": {
@@ -171,7 +171,7 @@
    }
   },
   "05-merged-header": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/05-merged-header/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/05-merged-header/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/05-merged-header/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/05-merged-header/png/bundle",
    "seconds": 18.029,
    "returncode": 0,
    "scores": {
@@ -215,7 +215,7 @@
    }
   },
   "06-units-in-headers": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/06-units-in-headers/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/06-units-in-headers/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/06-units-in-headers/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/06-units-in-headers/png/bundle",
    "seconds": 16.003,
    "returncode": 0,
    "scores": {
@@ -259,7 +259,7 @@
    }
   },
   "07-footnotes": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/07-footnotes/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/07-footnotes/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/07-footnotes/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/07-footnotes/png/bundle",
    "seconds": 15.764,
    "returncode": 0,
    "scores": {
@@ -303,7 +303,7 @@
    }
   },
   "08-two-column": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/08-two-column/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/08-two-column/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/08-two-column/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/08-two-column/png/bundle",
    "seconds": 16.392,
    "returncode": 0,
    "scores": {
@@ -347,7 +347,7 @@
    }
   },
   "09-intended-drops": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/09-intended-drops/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/09-intended-drops/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/09-intended-drops/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/09-intended-drops/png/bundle",
    "seconds": 16.273,
    "returncode": 0,
    "scores": {
@@ -394,7 +394,7 @@
    }
   },
   "10-torque-speed-plot": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/10-torque-speed-plot/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/10-torque-speed-plot/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/10-torque-speed-plot/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/10-torque-speed-plot/png/bundle",
    "seconds": 15.602,
    "returncode": 0,
    "scores": {
@@ -445,7 +445,7 @@
    }
   },
   "11-mixed-chinese": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/11-mixed-chinese/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/11-mixed-chinese/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/11-mixed-chinese/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/11-mixed-chinese/png/bundle",
    "seconds": 17.867,
    "returncode": 0,
    "scores": {
@@ -489,7 +489,7 @@
    }
   },
   "12-full-datasheet": {
-   "command": "uv run mdify /home/bam/markdownify/harness/out/runs/mdify/12-full-datasheet/png/input/source.png --out /home/bam/markdownify/harness/out/runs/mdify/12-full-datasheet/png/bundle",
+   "command": "uv run markdownify /home/bam/markdownify/harness/out/runs/markdownify/12-full-datasheet/png/input/source.png --out /home/bam/markdownify/harness/out/runs/markdownify/12-full-datasheet/png/bundle",
    "seconds": 16.055,
    "returncode": 0,
    "scores": {

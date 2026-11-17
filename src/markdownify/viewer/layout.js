@@ -1,7 +1,7 @@
 // Every pane boundary drags and is remembered; the KPI strip and the ledger inspector fold. WHY: Zach's standing UI
 // rule (~/zach_brain/Settings/Memory/feedback_resizable_panels.md) — a split he sets stays where he left it.
 
-const STORAGE_PREFIX = "mdify-view:";
+const STORAGE_PREFIX = "markdownify-view:";
 
 export function readStored(key, fallback) {
   try {

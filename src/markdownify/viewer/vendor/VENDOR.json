@@ -1,5 +1,5 @@
 {
-  "_why": "mdify view is served by the stdlib with no build step and no network, so the browser modules it needs are pinned copies here. tests/test_view.py re-hashes every file against this record. To update one: copy the new file, then change its version, origin and sha256 here together.",
+  "_why": "markdownify view is served by the stdlib with no build step and no network, so the browser modules it needs are pinned copies here. tests/test_view.py re-hashes every file against this record. To update one: copy the new file, then change its version, origin and sha256 here together.",
   "files": {
     "source-highlighter.js": {
       "project": "source-highlighter",

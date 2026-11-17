@@ -694,7 +694,7 @@ def write_bundle(arm_dir: pathlib.Path, *, source_bytes: bytes, source_name: str
         "range_units": "unicode_codepoints",
         "pages": pages, "blocks": blocks, "words": words, "dropped": dropped})
 
-    # ledger.json and kpis.json use the field names mdify's core writes (src/mdify/ledger.py); CONTRACT §5–6 name
+    # ledger.json and kpis.json use the field names markdownify's core writes (src/markdownify/ledger.py); CONTRACT §5–6 name
     # the quantities but not the JSON shape. The source side is the truth inventory ("harness-truth"), not
     # pdfplumber words, because the truth knows every word's fate exactly.
     fates = []

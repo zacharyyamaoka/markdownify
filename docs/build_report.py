@@ -10,7 +10,7 @@ and are reused on the next run; --fresh redraws them.
 
 The day's recorded demo media (hero video, four screenshots, journey-results.json) are read from
 reports/media/datasheet-ingestion-2026-10-29.inputs/, copied there once. WHY a local copy: Markdownify does not
-reference any particular host app (CONTRACT §9; its own viewer is `mdify view`), so its code names no outside path
+reference any particular host app (CONTRACT §9; its own viewer is `markdownify view`), so its code names no outside path
 for them.
 
 The 15 "new values" in the human-check section are drawn here, not pasted: each one's grounding is read from the
@@ -90,7 +90,7 @@ def hero_video(fresh: bool) -> bytes:
 
 def hero_poster(fresh: bool) -> bytes:
     """A still of the money shot (350.4W spotlit, ~6.4 s in), shown until the video starts."""
-    # WHY a screenshot, not a frame: `mdify view`'s own capture of the 350.4W spotlight is the exact money shot.
+    # WHY a screenshot, not a frame: `markdownify view`'s own capture of the 350.4W spotlight is the exact money shot.
     return jpeg_bytes(Image.open(INPUTS / "view-01-table-value-spotlit.png"), 1280, quality=70)
 
 
@@ -288,11 +288,11 @@ def human_check_items(fresh: bool) -> list[dict]:
 E = html.escape
 
 SOURCES = [
-    ("Markdownify harness scores (12 cases × PDF/PNG/HTML; runs mdify, vlm-claude, vlm-codex, vlm-ab-*)",
+    ("Markdownify harness scores (12 cases × PDF/PNG/HTML; runs markdownify, vlm-claude, vlm-codex, vlm-ab-*)",
      "/home/bam/markdownify/harness/out/results.json"),
     ("Markdownify contract: bundle, span index, ledger, KPIs, capture levels, extractor and RobotParts seams",
      "/home/bam/markdownify/CONTRACT.md"),
-    ("Markdownify README: the three pipelines, mdify capture and its measured sizes",
+    ("Markdownify README: the three pipelines, markdownify capture and its measured sizes",
      "/home/bam/markdownify/README.md"),
     ("Coverage ledger over robotparts' 46 cached web pages", "/home/bam/markdownify/scripts/real_html_ledger.py"),
     ("Markdownify commits: 8b1570b rectangular tables, 8b2367f no stitched matches, 417183a visual reading order, "
@@ -370,7 +370,7 @@ def value_id(item: dict) -> str:
 DIAGRAM = """
 <svg class="diagram" viewBox="0 0 1000 500" role="img" aria-labelledby="dg-title dg-desc" xmlns="http://www.w3.org/2000/svg">
   <title id="dg-title">The four black boxes and what flows between them</title>
-  <desc id="dg-desc">Capture feeds the raw source. Raw source goes to Markdownify, whose bundle feeds the Datasheet Extractor (Option 1); Option 2 sends the raw source straight to the extractor. The extractor's values go to RobotParts. Groundings and the stored source go to the Source Highlighter, which draws marks for the viewer (mdify view) and RobotParts' Go to source.</desc>
+  <desc id="dg-desc">Capture feeds the raw source. Raw source goes to Markdownify, whose bundle feeds the Datasheet Extractor (Option 1); Option 2 sends the raw source straight to the extractor. The extractor's values go to RobotParts. Groundings and the stored source go to the Source Highlighter, which draws marks for the viewer (markdownify view) and RobotParts' Go to source.</desc>
   <defs>
     <marker id="ar-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-m"/></marker>
     <marker id="ar-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-a"/></marker>
@@ -417,7 +417,7 @@ DIAGRAM = """
 
   <!-- boxes -->
   <g class="b b-new"><rect x="20" y="48" width="150" height="68" rx="10"/>
-    <text class="bt" x="95" y="76">Capture</text><text class="bs" x="95" y="96">mdify capture</text></g>
+    <text class="bt" x="95" y="76">Capture</text><text class="bs" x="95" y="96">markdownify capture</text></g>
   <g class="b b-src"><rect x="20" y="178" width="150" height="76" rx="10"/>
     <text class="bt" x="95" y="208">Raw source</text><text class="bs" x="95" y="228">PDF · web page</text><text class="bs" x="95" y="243">image</text></g>
   <g class="b b-new"><rect x="258" y="178" width="192" height="76" rx="10"/>
@@ -429,7 +429,7 @@ DIAGRAM = """
   <g class="b b-new"><rect x="538" y="338" width="192" height="84" rx="10"/>
     <text class="bt" x="634" y="366">Source Highlighter</text><text class="bs" x="634" y="386">source + Locations + style</text><text class="bs" x="634" y="401">→ marked source</text></g>
   <g class="b b-new"><rect x="258" y="338" width="194" height="84" rx="10"/>
-    <text class="bt" x="355" y="366">Viewer</text><text class="bs" x="355" y="386">markdown ↔ source, values</text><text class="bs" x="355" y="401">→ mdify view, its own page</text></g>
+    <text class="bt" x="355" y="366">Viewer</text><text class="bs" x="355" y="386">markdown ↔ source, values</text><text class="bs" x="355" y="401">→ markdownify view, its own page</text></g>
 
   <!-- legend -->
   <g class="lg" transform="translate(700,40)">
@@ -777,7 +777,7 @@ def build(fresh: bool) -> pathlib.Path:
         f'poster="{data_uri(poster, "image/jpeg")}">'
         f'<source src="{data_uri(hero, "video/mp4")}" type="video/mp4">'
         'Your viewer cannot play this video; the screenshots below show the same flow.</video>'
-        '<figcaption>11.5 s, muted, a real recording of <code>mdify view</code> — Markdownify\'s own page, no Clank. The Mean Well '
+        '<figcaption>11.5 s, muted, a real recording of <code>markdownify view</code> — Markdownify\'s own page, no Clank. The Mean Well '
         'LRS-350 opens with its KPI strip (coverage 100%, traceability 100%) → click <code>350.4W</code> in the markdown and the PDF '
         f'dims everything but that cell, under its own LRS-350-24 header.{c(9)}</figcaption></figure></section>')
 
@@ -787,16 +787,16 @@ def build(fresh: bool) -> pathlib.Path:
         f'all the next box knows.{c(2, 10)}</p>'
         f'<div class="diagram-wrap">{DIAGRAM}</div><p class="hint">Scroll the diagram sideways.</p>'
         '<ul class="small">'
-        '<li><b>Markdownify</b> <code>/home/bam/markdownify</code> — <code>mdify</code>: any PDF, web page or image → '
+        '<li><b>Markdownify</b> <code>/home/bam/markdownify</code> — <code>markdownify</code>: any PDF, web page or image → '
         'markdown, plus a <i>span index</i> (every word → its page and box, or its character range in the HTML) and a '
-        '<i>coverage ledger</i> (every source word: linked, or dropped with a reason). <code>mdify capture</code> lives here too.</li>'
+        '<i>coverage ledger</i> (every source word: linked, or dropped with a reason). <code>markdownify capture</code> lives here too.</li>'
         '<li><b>Datasheet Extractor</b> <code>/home/bam/datasheet-extractor</code> — a field list in, checked '
         '<code>values.json</code> out. Option 1 reads the Markdownify bundle and cites cell ids; Option 2 reads the raw '
         'source only and quotes text.</li>'
         '<li><b>Source Highlighter</b> <code>/home/bam/source-highlighter</code> — source + locations + style in, '
         'marked source out. Its contract owns the Location format everyone else writes.</li>'
-        '<li><b>Viewer</b> — the Markdownify view and the Datasheet values view. Now <b><code>mdify view</code>, a standalone page Markdownify ships itself</b> (7f307e1; 16 browser checks pass); '
-        'Markdownify does not reference Clank (CONTRACT §9, 631ec5d). The hero video is <code>mdify view</code>; the screenshots '
+        '<li><b>Viewer</b> — the Markdownify view and the Datasheet values view. Now <b><code>markdownify view</code>, a standalone page Markdownify ships itself</b> (7f307e1; 16 browser checks pass); '
+        'Markdownify does not reference Clank (CONTRACT §9, 631ec5d). The hero video is <code>markdownify view</code>; the screenshots '
         'further down are the earlier Clank prototype of the same views.</li></ul>'
         f'<p class="small muted">Why build at all: no open-source converter maps its own markdown back to word or '
         f'character locations (Docling, Marker and MinerU stop at blocks); Azure Content Understanding and LandingAI do '
@@ -866,7 +866,7 @@ def build(fresh: bool) -> pathlib.Path:
         f'<p>Mean Well LRS-350: the corner cell <i>MODEL</i> threw the header row off by one, so the markdown put '
         f'<code>350.4W</code> under <b>LRS-350-36</b> instead of <b>LRS-350-24</b>. A person or a model reading that '
         f'table would have been wrong. Fix: merged-cell tables are written on a rectangular grid, with empty filler '
-        f'rather than a guessed merge (<code>src/mdify/tables.py</code>). A new <code>mdify check</code> rule, “tables are '
+        f'rather than a guessed merge (<code>src/markdownify/tables.py</code>). A new <code>markdownify check</code> rule, “tables are '
         f'rectangular”, found 7 of 23 cached tables ragged before, 0 after.{c(5, 12)}</p>'
         f'<figure>{shift_svg()}<figcaption>To scale, measured in the prototype viewer (x in px). Before: the value\'s centre '
         f'1206.3 sits outside the LRS-350-24 header (1097.8–1170.1). After: 1293.3 sits inside 1257.1–1329.5.{c(9, 12)}'
@@ -944,7 +944,7 @@ def build(fresh: bool) -> pathlib.Path:
 
     # 7 · capture
     add('<section id="capture"><h2><span class="n">7</span>Capture</h2>'
-        f'<p><code>mdify capture &lt;url&gt; --keep link,html,snapshot,pdf,archive</code>: one headless-browser visit '
+        f'<p><code>markdownify capture &lt;url&gt; --keep link,html,snapshot,pdf,archive</code>: one headless-browser visit '
         f'builds every level, prints each one\'s measured size, keeps the ones you pick and deletes the rest — your “not '
         f'either or”.{c(3)}</p>')
     add(table(["Page", "html", "snapshot JPG", "print-PDF", "full archive (WACZ)", "offline replay vs snapshot"], [
@@ -1003,7 +1003,7 @@ def build(fresh: bool) -> pathlib.Path:
         f'Docs suggestion-mode style (CONTRACT §7.1, ffb618f).{c(2, 5)}</li></ul>'
         '<h3>Left</h3><ul>'
         f'<li><b>Blocked on you:</b> RobotParts\' vocabulary change sits on a robotparts lane, not main.{c(12)}</li>'
-        '<li>Done: the viewer moved out of Clank into <code>mdify view</code> (7f307e1). The datasheet values view gets built '
+        '<li>Done: the viewer moved out of Clank into <code>markdownify view</code> (7f307e1). The datasheet values view gets built '
         'from your review-view pick.</li>'
         '<li>Next: spec tables inside iframes (eRob80) and as images in web pages → child bundles (decision b).</li>'
         + ('<li>Next (new today): alt-text groundings — ground an image\'s alt text to the image element, so the '
@@ -1017,7 +1017,7 @@ def build(fresh: bool) -> pathlib.Path:
         '<h3>Needs you</h3><div class="decide">')
     asks = [
         ("(a) Default pipeline for images?",
-         "A stays the default (no AI, ~1 s a page). AB is opt-in with <code>mdify --pipeline AB</code>, and the extractor "
+         "A stays the default (no AI, ~1 s a page). AB is opt-in with <code>markdownify --pipeline AB</code>, and the extractor "
          "uses AB automatically for image sources, where A places 0.893 of words and AB 0.999.",
          "exactly that."),
         ("(b) iframes and images inside web pages?",
@@ -1063,22 +1063,22 @@ def build(fresh: bool) -> pathlib.Path:
 
     # 11 · run
     add('<section id="run"><h2><span class="n">11</span>How to run each thing</h2>')
-    add(command("uv run --directory /home/bam/markdownify mdify view /home/bam/.cache/markdownify/bundles/ac3e7b8d27dcd72277b6bdbb208586a2343a635edf1ff578fffd131a31713f6f",
-                "<b>The viewer</b> — <code>mdify view</code> on the Mean Well LRS-350: source left, markdown right, KPIs on top; "
+    add(command("uv run --directory /home/bam/markdownify markdownify view /home/bam/.cache/markdownify/bundles/ac3e7b8d27dcd72277b6bdbb208586a2343a635edf1ff578fffd131a31713f6f",
+                "<b>The viewer</b> — <code>markdownify view</code> on the Mean Well LRS-350: source left, markdown right, KPIs on top; "
                 "click a value and its cell lights up on the PDF. Prints its URL; opens no window"))
-    add(command("uv run --directory /home/bam/markdownify mdify /home/bam/markdownify/harness/out/04-multi-model/pdf/source.pdf",
+    add(command("uv run --directory /home/bam/markdownify markdownify /home/bam/markdownify/harness/out/04-multi-model/pdf/source.pdf",
                 "<b>Markdownify, pipeline A</b> (no AI) — bundle lands in <code>~/.cache/markdownify/bundles/&lt;sha256&gt;/</code>"))
-    add(command("uv run --directory /home/bam/markdownify mdify /home/bam/markdownify/harness/out/04-multi-model/png/source.png --pipeline AB",
+    add(command("uv run --directory /home/bam/markdownify markdownify /home/bam/markdownify/harness/out/04-multi-model/png/source.png --pipeline AB",
                 "<b>Markdownify, pipeline AB</b> — the model writes, the source's words place (20–50 s a page)"))
-    add(command("uv run --directory /home/bam/markdownify mdify check /home/bam/markdownify/harness/out/runs/pipeline-a/04-multi-model/pdf/bundle",
-                "<b>mdify check</b> — re-derives a bundle's invariants (tables rectangular, every word accounted for)"))
-    add(command("uv run --directory /home/bam/markdownify mdify capture https://www.cubemars.com/product/ak80-8-kv60-robotic-actuator.html --dry-sizes",
+    add(command("uv run --directory /home/bam/markdownify markdownify check /home/bam/markdownify/harness/out/runs/pipeline-a/04-multi-model/pdf/bundle",
+                "<b>markdownify check</b> — re-derives a bundle's invariants (tables rectangular, every word accounted for)"))
+    add(command("uv run --directory /home/bam/markdownify markdownify capture https://www.cubemars.com/product/ak80-8-kv60-robotic-actuator.html --dry-sizes",
                 "<b>Capture sizes</b> — one visit, measures every level, keeps nothing"))
     add(command("uv run --directory /home/bam/datasheet-extractor extract /home/bam/source-highlighter/tests/fixtures/j60-joint.pdf --fields /home/bam/datasheet-extractor/fields/actuator.json --option 1 --part-model J60-10 --out /home/bam/.cache/datasheet-extractor/try/j60-option1",
                 "<b>Datasheet Extractor, Option 1</b> — one LLM call, writes <code>values.json</code>"))
     add(command("uv run --directory /home/bam/source-highlighter source-highlighter /home/bam/source-highlighter/tests/fixtures/j60-joint.pdf --locations /home/bam/source-highlighter/tests/fixtures/j60-joint.locations.json --style spotlight --out /home/bam/source-highlighter/out/j60-spotlight.png",
                 "<b>Source Highlighter</b> — the J60 spotlight in the gallery"))
-    add(command("uv run --directory /home/bam/markdownify python /home/bam/markdownify/harness/run.py --pipeline 'uv run mdify {source} --out {bundle}'",
+    add(command("uv run --directory /home/bam/markdownify python /home/bam/markdownify/harness/run.py --pipeline 'uv run markdownify {source} --out {bundle}'",
                 "<b>The ruler</b> — re-runs pipeline A over all 12 cases (overwrites its own previous result)"))
     add(command("uv run --directory /home/bam/markdownify python /home/bam/markdownify/docs/build_report.py",
                 "<b>Rebuild this page</b> — reuses its renders; add <code>--fresh</code> to redraw them"))

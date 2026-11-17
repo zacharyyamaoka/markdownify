@@ -1,4 +1,4 @@
-"""`mdify view`: the server and the command, without a browser (tests/test_view_journey.py drives the page) — except
+"""`markdownify view`: the server and the command, without a browser (tests/test_view_journey.py drives the page) — except
 the full-archive button, whose replay only a browser can show. Run: uv run pytest tests/test_view.py"""
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import urllib.request
 
 import pytest
 
-from mdify import bundle, cli, view
+from markdownify import bundle, cli, view
 
 MD = "# Title\n\nRated torque 8.3 Nm\n"
 
@@ -95,7 +95,7 @@ def test_view_of_a_bundle_does_not_convert(monkeypatch, tmp_path, capsys):
 
 
 @pytest.mark.parametrize("pipeline, routed", [("A", "bundle"), ("AB", "vlm")])
-def test_view_of_a_source_converts_it_first_as_mdify_does(monkeypatch, tmp_path, pipeline, routed):
+def test_view_of_a_source_converts_it_first_as_markdownify_does(monkeypatch, tmp_path, pipeline, routed):
     directory = make_bundle(tmp_path / "bundle")
     seen = []
 
@@ -105,7 +105,7 @@ def test_view_of_a_source_converts_it_first_as_mdify_does(monkeypatch, tmp_path,
             return types.SimpleNamespace(directory=directory, kpis={})
         return build
 
-    from mdify import vlm
+    from markdownify import vlm
 
     monkeypatch.setattr(bundle, "build", fake("bundle"))
     monkeypatch.setattr(vlm, "build", fake("vlm"))
@@ -117,7 +117,7 @@ def test_view_of_a_source_converts_it_first_as_mdify_does(monkeypatch, tmp_path,
 
 def test_view_of_a_missing_file_fails_cleanly(capsys):
     assert cli.main(["view", "/nonexistent/datasheet.pdf"]) == 1
-    assert "mdify view: /nonexistent/datasheet.pdf" in capsys.readouterr().err
+    assert "markdownify view: /nonexistent/datasheet.pdf" in capsys.readouterr().err
 
 
 def test_vendored_modules_match_their_record():
@@ -135,8 +135,8 @@ def test_full_archive_button_replays_the_wacz_offline(tmp_path):
 
     sync_api = pytest.importorskip("playwright.sync_api")
     pytest.importorskip("wacz")
-    from mdify import capture
-    from mdify.cache import Cache
+    from markdownify import capture
+    from markdownify.cache import Cache
 
     page_html = b"<!doctype html><title>AK70-10</title><link rel=stylesheet href=/s.css><p>Rated torque 8.3 Nm</p>"
 
