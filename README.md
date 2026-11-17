@@ -5,7 +5,9 @@ every word links back to where it sits in the source. The Datasheet Extractor an
 that link.
 
 - **Contract:** [CONTRACT.md](CONTRACT.md) — the bundle, the span index, the coverage ledger, the KPIs, the seams.
-- **Command:** `mdify` (PyPI's `markdownify` is a different, already-installed library).
+- **Name:** Markdownify — never "mdify" when you talk or write about it. WHY (Zach, 2026-11-16): "please STOP calling
+  it mdify … if it overlaps this can just be an internal tool for me"; it is a superset of PyPI's `markdownify`
+  (HTML → markdown only), so the name clash is fine. The command is still `mdify` until the package is renamed (open).
 - **Research:** vault `Projects/Markdownify/`.
 
 Layout: `src/mdify/` (converters + core), `harness/` (the round-trip ruler: markdown → render → convert → score),
